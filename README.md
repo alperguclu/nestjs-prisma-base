@@ -188,4 +188,4 @@ class ExtendedUserService extends BaseUserService {
 
 ## License
 
-ISC
+MIT

@@ -1,0 +1,17 @@
+// Prisma module exports
+export * from './prisma/prisma.module';
+export * from './prisma/prisma.service';
+
+// Base classes exports
+export * from './base/base.controller';
+export * from './base/base.service';
+export * from './base/base.dto';
+
+// Decorators exports
+export * from './decorators/model-name.decorator';
+
+// Factories exports
+export * from './common/dto-factory';
+export * from './common/service-factory';
+export * from './common/controller-factory';
+export * from './common/module-factory';

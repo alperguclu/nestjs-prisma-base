@@ -28,7 +28,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/alpergul/nestjs-prisma-base.git"
+    "url": "https://github.com/alperguclu/nestjs-prisma-base.git"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

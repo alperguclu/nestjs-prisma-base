@@ -12,10 +12,11 @@ npm install nestjs-prisma-base
 
 - Ready-to-use Prisma module with proper lifecycle management
 - Base service with common CRUD operations
-- Base controller with REST endpoints
+- Base controller with configurable REST endpoints
 - Base DTOs for standardizing request/response data
 - Utility decorators for easier implementation
 - Factory functions to auto-generate components from Prisma models
+- Selective endpoint activation for precise API control
 
 ## Usage
 
@@ -90,39 +91,78 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
 }
 ```
 
-#### 4. Create your controller by extending the base controller
+#### 4. Create your controller by extending the base controller with endpoint configuration
 
 ```typescript
 // user.controller.ts
 import { Controller } from '@nestjs/common';
-import { BaseController } from 'nestjs-prisma-base';
+import { BaseController, EnableEndpoint, EndpointType, EnableAllEndpoints, DisableEndpoint } from 'nestjs-prisma-base';
 import { User } from '@prisma/client';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './user.dto';
 
 @Controller('users')
+// Option 1: Enable specific endpoints
+@EnableEndpoint(EndpointType.FIND_ALL)
+@EnableEndpoint(EndpointType.FIND_ONE)
+@EnableEndpoint(EndpointType.CREATE)
+
+// Option 2: Enable all endpoints at once
+// @EnableAllEndpoints()
+
+// Option 3: Enable all except specific ones
+// @EnableAllEndpoints()
+// @DisableEndpoint(EndpointType.REMOVE)
 export class UserController extends BaseController<User, CreateUserDto, UpdateUserDto> {
   constructor(private readonly userService: UserService) {
     super(userService);
   }
 
   // Add custom endpoints here
+  // Don't forget to enable your custom endpoints!
+  @EnableEndpoint('findByEmail')
+  @Get('by-email/:email')
+  findByEmail(@Param('email') email: string) {
+    return this.userService.findByEmail(email);
+  }
 }
 ```
 
 ### Option 2: Using Factory Functions (Auto-Generated Approach)
 
-#### 1. Generate an entire module for a model in one line
+#### 1. Generate an entire module for a model with configurable endpoints
 
 ```typescript
 // user.module.ts
-import { createModelModule } from 'nestjs-prisma-base';
+import { createModelModule, EndpointType } from 'nestjs-prisma-base';
 
-// This creates a complete module with controller, service and DTOs
+// Option 1: Create module with specific enabled endpoints
 export const UserModule = createModelModule({
-  modelName: 'User',
-  prismaModelKey: 'user',
+  modelName: 'user',
   routePath: 'users',
+  enabledEndpoints: [EndpointType.FIND_ALL, EndpointType.FIND_ONE, EndpointType.CREATE],
+});
+
+// Option 2: Create module with all endpoints enabled
+export const ProductModule = createModelModule({
+  modelName: 'product',
+  enableAllEndpoints: true,
+});
+
+// Option 3: Create module with custom service
+export const CategoryModule = createModelModule({
+  modelName: 'category',
+  enableAllEndpoints: true,
+  serviceType: CategoryService, // Your custom service class
+  providers: [
+    /* Additional providers */
+  ],
+  imports: [
+    /* Additional imports */
+  ],
+  exports: [
+    /* Additional exports */
+  ],
 });
 ```
 
@@ -144,44 +184,70 @@ import { UserModule } from './user.module';
 export class AppModule {}
 ```
 
-#### 3. Generate individual components (if you need more control)
+## Endpoint Configuration
+
+In version 0.2.0 and above, endpoints are disabled by default and must be explicitly enabled. This provides better security and control over your API surface.
+
+### Available Endpoint Types
 
 ```typescript
-// Generate DTOs for a model
-import { createDtos } from 'nestjs-prisma-base';
-import { User } from '@prisma/client';
-
-const { CreateDto, UpdateDto, ResponseDto } = createDtos<User>('User');
-
-// Generate a service
-import { createModelService } from 'nestjs-prisma-base';
-
-const UserService = createModelService<User>('User', 'user');
-
-// Generate a controller
-import { createModelController } from 'nestjs-prisma-base';
-
-const UserController = createModelController<User>('User', 'users', UserService);
+export enum EndpointType {
+  FIND_ALL = 'findAll', // GET /resource
+  FIND_ONE = 'findOne', // GET /resource/:id
+  CREATE = 'create', // POST /resource
+  UPDATE = 'update', // PATCH /resource/:id
+  REMOVE = 'remove', // DELETE /resource/:id
+}
 ```
 
-#### 4. Extend generated components with custom functionality
+### Enabling Endpoints with Decorators
+
+You can enable endpoints at the controller level:
 
 ```typescript
-// First, generate the base service
-const BaseUserService = createModelService<User>('User', 'user');
+@Controller('users')
+@EnableEndpoint(EndpointType.FIND_ALL)
+@EnableEndpoint(EndpointType.FIND_ONE)
+export class UserController extends BaseController<User, CreateUserDto, UpdateUserDto> {
+  // ...
+}
+```
 
-// Then extend it with custom methods
-@Injectable()
-class ExtendedUserService extends BaseUserService {
-  constructor(prisma: PrismaService) {
-    super(prisma);
-  }
+Or enable all endpoints at once:
 
-  // Add custom methods
-  async findByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { email },
-    });
+```typescript
+@Controller('users')
+@EnableAllEndpoints()
+export class UserController extends BaseController<User, CreateUserDto, UpdateUserDto> {
+  // ...
+}
+```
+
+### Disabling Specific Endpoints
+
+You can disable specific endpoints even when using `@EnableAllEndpoints()`:
+
+```typescript
+@Controller('users')
+@EnableAllEndpoints()
+@DisableEndpoint(EndpointType.REMOVE)
+export class UserController extends BaseController<User, CreateUserDto, UpdateUserDto> {
+  // ...
+}
+```
+
+### Enabling Method-Level Endpoints
+
+You can also selectively enable endpoints at the method level:
+
+```typescript
+@Controller('users')
+export class UserController extends BaseController<User, CreateUserDto, UpdateUserDto> {
+  // Only this method will be available
+  @EnableEndpoint('findAdmins')
+  @Get('admins')
+  findAdmins() {
+    return this.userService.findAdmins();
   }
 }
 ```

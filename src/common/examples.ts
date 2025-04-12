@@ -3,61 +3,101 @@
  * It is not part of the package exports
  */
 
-import { Controller, Injectable, Module } from '@nestjs/common';
+import { Controller, Get, Injectable, Module } from '@nestjs/common';
 import { BaseController } from '../base/base.controller';
 import { BaseService } from '../base/base.service';
 import { BaseCreateDto, BaseUpdateDto, BaseResponseDto } from '../base/base.dto';
 import { ModelName } from '../decorators/model-name.decorator';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { createModelModule } from './module-factory';
+import { EnableEndpoint, EndpointType, EnableAllEndpoints, DisableEndpoint } from '../decorators/endpoint.decorator';
 
-// Example with a User entity
-
-// 1. Define your DTOs
-export class CreateUserDto extends BaseCreateDto {
-  name!: string;
-  email!: string;
-  password!: string;
+// Example entity
+interface User {
+  id: string;
+  name: string;
+  email: string;
 }
 
-export class UpdateUserDto extends BaseUpdateDto {
+// Example DTOs
+class CreateUserDto {
+  name: string = '';
+  email: string = '';
+}
+
+class UpdateUserDto {
   name?: string;
   email?: string;
 }
 
-export class UserResponseDto extends BaseResponseDto {
-  name!: string;
-  email!: string;
+// Example 1: Creating a custom controller with selective endpoint enabling
+@Controller('users')
+@EnableEndpoint(EndpointType.FIND_ALL)
+@EnableEndpoint(EndpointType.FIND_ONE)
+export class UserController extends BaseController<User, CreateUserDto, UpdateUserDto> {
+  constructor(service: UserService) {
+    super(service);
+  }
+
+  // Custom endpoint example
+  @Get('admins')
+  @EnableEndpoint('admins')
+  findAdmins() {
+    // Example implementation
+    return [];
+  }
 }
 
-// 2. Define your service
+// Example 2: Custom service implementation
 @Injectable()
-@ModelName('user') // This will specify 'user' as the Prisma model name
-export class UserService extends BaseService<UserResponseDto, CreateUserDto, UpdateUserDto> {
-  // The modelName property is defined via the ModelName decorator
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
   protected readonly modelName = 'user';
 
-  constructor(prisma: PrismaService) {
+  constructor(protected readonly prisma: PrismaService) {
     super(prisma);
   }
 
-  // You can add custom methods here
-  async findByEmail(email: string): Promise<UserResponseDto | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-    return user as UserResponseDto | null;
+  // Custom method example
+  async findAdmins(): Promise<User[]> {
+    return [];
   }
 }
 
-// 3. Define your controller
-@Controller('users')
-export class UserController extends BaseController<UserResponseDto, CreateUserDto, UpdateUserDto> {
-  constructor(private readonly userService: UserService) {
-    super(userService);
-  }
+// Example 3: Using module factory with specific endpoints enabled
+export const UsersModule = createModelModule({
+  modelName: 'user',
+  routePath: 'users',
+  enabledEndpoints: [EndpointType.FIND_ALL, EndpointType.FIND_ONE, EndpointType.CREATE],
+});
 
-  // You can add custom endpoints here
+// Example 4: Using module factory with all endpoints enabled
+export const ProductModule = createModelModule({
+  modelName: 'product',
+  enableAllEndpoints: true,
+});
+
+// Example 5: Using module factory with all endpoints enabled except DELETE
+export const CategoryModule = createModelModule({
+  modelName: 'category',
+  enableAllEndpoints: true,
+  serviceType: class CategoryService extends BaseService<any, any, any> {
+    protected readonly modelName = 'category';
+
+    constructor(protected readonly prisma: PrismaService) {
+      super(prisma);
+    }
+  },
+});
+
+// Example 6: Create a controller that uses decorators to disable specific endpoints
+@Controller('orders')
+@EnableAllEndpoints()
+@DisableEndpoint(EndpointType.REMOVE)
+export class OrderController extends BaseController<any, any, any> {
+  constructor(service: BaseService<any, any, any>) {
+    super(service);
+  }
 }
 
 // 4. Define your module

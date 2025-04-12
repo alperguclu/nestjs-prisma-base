@@ -9,9 +9,8 @@ export * from './base/base.dto';
 
 // Decorators exports
 export * from './decorators/model-name.decorator';
+export * from './decorators/endpoint.decorator';
 
 // Factories exports
 export * from './common/dto-factory';
-export * from './common/service-factory';
-export * from './common/controller-factory';
 export * from './common/module-factory';

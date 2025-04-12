@@ -32,6 +32,7 @@ class UpdateUserDto {
 }
 
 // Example 1: Creating a custom controller with selective endpoint enabling
+// IMPORTANT: Without the EnableEndpoint decorators, no endpoints would be exposed
 @Controller('users')
 @EnableEndpoint(EndpointType.FIND_ALL)
 @EnableEndpoint(EndpointType.FIND_ONE)
@@ -40,7 +41,7 @@ export class UserController extends BaseController<User, CreateUserDto, UpdateUs
     super(service);
   }
 
-  // Custom endpoint example
+  // Custom endpoint example - MUST be explicitly enabled
   @Get('admins')
   @EnableEndpoint('admins')
   findAdmins() {
@@ -65,6 +66,7 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
 }
 
 // Example 3: Using module factory with specific endpoints enabled
+// Note: Without enabledEndpoints or enableAllEndpoints, no endpoints would be exposed
 export const UsersModule = createModelModule({
   modelName: 'user',
   routePath: 'users',
@@ -74,13 +76,13 @@ export const UsersModule = createModelModule({
 // Example 4: Using module factory with all endpoints enabled
 export const ProductModule = createModelModule({
   modelName: 'product',
-  enableAllEndpoints: true,
+  enableAllEndpoints: true, // This is necessary to expose any endpoints
 });
 
 // Example 5: Using module factory with all endpoints enabled except DELETE
 export const CategoryModule = createModelModule({
   modelName: 'category',
-  enableAllEndpoints: true,
+  enableAllEndpoints: true, // First enable all
   serviceType: class CategoryService extends BaseService<any, any, any> {
     protected readonly modelName = 'category';
 
@@ -92,8 +94,8 @@ export const CategoryModule = createModelModule({
 
 // Example 6: Create a controller that uses decorators to disable specific endpoints
 @Controller('orders')
-@EnableAllEndpoints()
-@DisableEndpoint(EndpointType.REMOVE)
+@EnableAllEndpoints() // First enable all endpoints
+@DisableEndpoint(EndpointType.REMOVE) // Then selectively disable some
 export class OrderController extends BaseController<any, any, any> {
   constructor(service: BaseService<any, any, any>) {
     super(service);

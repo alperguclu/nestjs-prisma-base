@@ -186,7 +186,7 @@ export class AppModule {}
 
 ## Endpoint Configuration
 
-In version 0.2.0 and above, endpoints are disabled by default and must be explicitly enabled. This provides better security and control over your API surface.
+**Important: By default, all endpoints are disabled for security reasons.** In version 0.2.0 and above, you must explicitly enable each endpoint you want to expose. This provides better security and control over your API surface.
 
 ### Available Endpoint Types
 

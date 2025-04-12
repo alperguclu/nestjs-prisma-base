@@ -124,17 +124,24 @@ export function createModelService<T, CreateDto, UpdateDto>(modelName: string, p
 export function createModelController<T, CreateDto, UpdateDto>(modelName: string, routePath: string, serviceType: Type<BaseService<T, CreateDto, UpdateDto>>): Type<any> {
   const { BaseController } = require('../base/base.controller');
 
+  // Create a controller class that extends BaseController
   class ModelController extends BaseController<T, CreateDto, UpdateDto> {
     constructor(service: BaseService<T, CreateDto, UpdateDto>) {
       super(service);
     }
   }
 
+  // Set the name of the controller class
   Object.defineProperty(ModelController, 'name', {
     value: `${modelName}Controller`,
   });
 
+  // Set the path metadata for routing
   Reflect.defineMetadata('path', routePath, ModelController);
+
+  // Ensure endpoints are disabled by default by not adding any ENABLED_ENDPOINTS_KEY metadata
+  // This is important because the base controller will check for this metadata
+  // and only enable endpoints that are explicitly enabled
 
   return ModelController;
 }

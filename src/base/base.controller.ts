@@ -1,4 +1,5 @@
 import { Body, Delete, Get, NotFoundException, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { BaseService } from './base.service';
 import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType, ApiExcludeDisabledEndpoint } from '../decorators/endpoint.decorator';
 
@@ -8,7 +9,43 @@ import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, E
  * using the @EnableEndpoint decorator or module configuration.
  */
 export abstract class BaseController<T, CreateDto, UpdateDto> {
-  constructor(protected readonly service: BaseService<T, CreateDto, UpdateDto>) {}
+  constructor(protected readonly service: BaseService<T, CreateDto, UpdateDto>) {
+    // Apply ApiExcludeEndpoint for disabled endpoints at class creation time
+    this.applySwaggerExclusions();
+  }
+
+  /**
+   * Apply ApiExcludeEndpoint decorators to methods that should be excluded from Swagger
+   * This is called once during controller construction
+   */
+  private applySwaggerExclusions(): void {
+    // Get the prototype to apply decorators
+    const proto = this.constructor.prototype;
+
+    // We need descriptor objects for the ApiExcludeEndpoint decorator
+    const findAllDesc = Object.getOwnPropertyDescriptor(proto, 'findAll') || { value: proto.findAll };
+    const findOneDesc = Object.getOwnPropertyDescriptor(proto, 'findOne') || { value: proto.findOne };
+    const createDesc = Object.getOwnPropertyDescriptor(proto, 'create') || { value: proto.create };
+    const updateDesc = Object.getOwnPropertyDescriptor(proto, 'update') || { value: proto.update };
+    const removeDesc = Object.getOwnPropertyDescriptor(proto, 'remove') || { value: proto.remove };
+
+    // Check each standard endpoint
+    if (!this.isEndpointEnabled(EndpointType.FIND_ALL)) {
+      ApiExcludeEndpoint()(proto, 'findAll', findAllDesc);
+    }
+    if (!this.isEndpointEnabled(EndpointType.FIND_ONE)) {
+      ApiExcludeEndpoint()(proto, 'findOne', findOneDesc);
+    }
+    if (!this.isEndpointEnabled(EndpointType.CREATE)) {
+      ApiExcludeEndpoint()(proto, 'create', createDesc);
+    }
+    if (!this.isEndpointEnabled(EndpointType.UPDATE)) {
+      ApiExcludeEndpoint()(proto, 'update', updateDesc);
+    }
+    if (!this.isEndpointEnabled(EndpointType.REMOVE)) {
+      ApiExcludeEndpoint()(proto, 'remove', removeDesc);
+    }
+  }
 
   /**
    * Check if an endpoint is enabled for this controller instance
@@ -40,7 +77,6 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Get all records with pagination
    */
   @Get()
-  @ApiExcludeDisabledEndpoint(EndpointType.FIND_ALL)
   findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
     if (!this.isEndpointEnabled(EndpointType.FIND_ALL)) {
       throw new NotFoundException('Endpoint not available');
@@ -52,7 +88,6 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Get a single record by ID
    */
   @Get(':id')
-  @ApiExcludeDisabledEndpoint(EndpointType.FIND_ONE)
   findOne(@Param('id') id: string) {
     if (!this.isEndpointEnabled(EndpointType.FIND_ONE)) {
       throw new NotFoundException('Endpoint not available');
@@ -64,7 +99,6 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Create a new record
    */
   @Post()
-  @ApiExcludeDisabledEndpoint(EndpointType.CREATE)
   create(@Body() createDto: CreateDto) {
     if (!this.isEndpointEnabled(EndpointType.CREATE)) {
       throw new NotFoundException('Endpoint not available');
@@ -76,7 +110,6 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Update a record
    */
   @Patch(':id')
-  @ApiExcludeDisabledEndpoint(EndpointType.UPDATE)
   update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
     if (!this.isEndpointEnabled(EndpointType.UPDATE)) {
       throw new NotFoundException('Endpoint not available');
@@ -88,7 +121,6 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Delete a record
    */
   @Delete(':id')
-  @ApiExcludeDisabledEndpoint(EndpointType.REMOVE)
   remove(@Param('id') id: string) {
     if (!this.isEndpointEnabled(EndpointType.REMOVE)) {
       throw new NotFoundException('Endpoint not available');

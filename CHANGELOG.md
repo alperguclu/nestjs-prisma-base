@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1]
+
+### Fixed
+
+- Improved Swagger integration to properly hide disabled endpoints
+  - Fixed issue where disabled endpoints were still showing in Swagger UI
+  - Implemented a more robust approach for applying ApiExcludeEndpoint at runtime
+
 ## [0.3.0]
 
 ### Changed

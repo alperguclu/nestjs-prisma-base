@@ -1,6 +1,6 @@
 import { Body, Delete, Get, NotFoundException, Param, Patch, Post, Query } from '@nestjs/common';
 import { BaseService } from './base.service';
-import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType } from '../decorators/endpoint.decorator';
+import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType, ApiExcludeDisabledEndpoint } from '../decorators/endpoint.decorator';
 
 /**
  * Base controller with configurable CRUD endpoints
@@ -40,6 +40,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Get all records with pagination
    */
   @Get()
+  @ApiExcludeDisabledEndpoint(EndpointType.FIND_ALL)
   findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
     if (!this.isEndpointEnabled(EndpointType.FIND_ALL)) {
       throw new NotFoundException('Endpoint not available');
@@ -51,6 +52,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Get a single record by ID
    */
   @Get(':id')
+  @ApiExcludeDisabledEndpoint(EndpointType.FIND_ONE)
   findOne(@Param('id') id: string) {
     if (!this.isEndpointEnabled(EndpointType.FIND_ONE)) {
       throw new NotFoundException('Endpoint not available');
@@ -62,6 +64,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Create a new record
    */
   @Post()
+  @ApiExcludeDisabledEndpoint(EndpointType.CREATE)
   create(@Body() createDto: CreateDto) {
     if (!this.isEndpointEnabled(EndpointType.CREATE)) {
       throw new NotFoundException('Endpoint not available');
@@ -73,6 +76,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Update a record
    */
   @Patch(':id')
+  @ApiExcludeDisabledEndpoint(EndpointType.UPDATE)
   update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
     if (!this.isEndpointEnabled(EndpointType.UPDATE)) {
       throw new NotFoundException('Endpoint not available');
@@ -84,6 +88,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Delete a record
    */
   @Delete(':id')
+  @ApiExcludeDisabledEndpoint(EndpointType.REMOVE)
   remove(@Param('id') id: string) {
     if (!this.isEndpointEnabled(EndpointType.REMOVE)) {
       throw new NotFoundException('Endpoint not available');

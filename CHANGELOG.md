@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.3.0]
+
+### Changed
+
+- **BREAKING**: Updated NestJS dependencies to v11.0.16
+  - Updated `@nestjs/common` to ^11.0.0
+  - Updated `@nestjs/core` to ^11.0.0
+  - Updated `@nestjs/swagger` to ^11.0.0
+- Updated peer dependencies to reflect NestJS v11 compatibility
+- Requires Node.js 20+ (NestJS v11 requirement)
+
+## [0.2.2]
+
+### Added
+
+- Swagger integration with `ApiExcludeDisabledEndpoint` decorator
+  - Automatically hides disabled endpoints from Swagger UI documentation
+  - Applied to all standard endpoints in `BaseController`
+  - Available for use with custom endpoints
+- Added documentation for Swagger integration in README
+
+### Changed
+
+- Updated dependencies to include `@nestjs/swagger` as a peer dependency
+
 ## [0.2.0]
 
 ### Added

@@ -200,6 +200,25 @@ export enum EndpointType {
 }
 ```
 
+### Swagger Integration
+
+When using this package with Swagger documentation, endpoints that are disabled will be automatically hidden from the Swagger UI. This is accomplished through the `ApiExcludeDisabledEndpoint` decorator that's applied to all standard endpoints in the `BaseController`.
+
+If you're creating custom endpoints, you can use the decorator to hide them from Swagger when they're disabled:
+
+```typescript
+@Get('custom-endpoint')
+@ApiExcludeDisabledEndpoint('customEndpoint')
+customEndpoint() {
+  if (!this.isEndpointEnabled('customEndpoint')) {
+    throw new NotFoundException('Endpoint not available');
+  }
+  // Your implementation
+}
+```
+
+This requires the `@nestjs/swagger` package to be installed in your project.
+
 ### Enabling Endpoints with Decorators
 
 You can enable endpoints at the controller level:

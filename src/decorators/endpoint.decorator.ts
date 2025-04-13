@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { applyDecorators } from '@nestjs/common';
+import { ApiExcludeEndpoint } from '@nestjs/swagger';
 
 /**
  * Enum defining standard endpoint types
@@ -64,4 +66,62 @@ export function DisableEndpoint(endpointName: EndpointType | string) {
  */
 export function EnableAllEndpoints() {
   return EnableEndpoint('*');
+}
+
+/**
+ * Check if an endpoint is enabled
+ * @param target The target class
+ * @param endpointName The endpoint name to check
+ */
+export function isEndpointEnabled(target: any, endpointName: string): boolean {
+  // Check method-level disable decorator
+  if (Reflect.getMetadata(ENDPOINT_DISABLED_KEY, target, endpointName)) {
+    return false;
+  }
+
+  // Check method-level enable decorator
+  if (Reflect.getMetadata(ENDPOINT_ENABLED_KEY, target, endpointName)) {
+    return true;
+  }
+
+  // Check class-level enable decorator
+  const enabledEndpoints = Reflect.getMetadata(ENABLED_ENDPOINTS_KEY, target.constructor) || [];
+  if (enabledEndpoints.includes(endpointName) || enabledEndpoints.includes('*')) {
+    // Check if explicitly disabled at class level
+    const disabledEndpoints = Reflect.getMetadata(DISABLED_ENDPOINTS_KEY, target.constructor) || [];
+    return !disabledEndpoints.includes(endpointName);
+  }
+
+  // By default, endpoints are not enabled
+  return false;
+}
+
+/**
+ * Decorator that conditionally applies ApiExcludeEndpoint when an endpoint is disabled
+ * Can be applied to any controller method
+ */
+export function ApiExcludeDisabledEndpoint(endpointName: EndpointType | string): MethodDecorator {
+  return (target: object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<any>) => {
+    // Store the enabled status as metadata since we can't evaluate it at decoration time
+    Reflect.defineMetadata('api:shouldExclude', endpointName, target, propertyKey.toString());
+
+    // We need to override the controller method to check at runtime
+    const originalMethod = descriptor.value;
+    descriptor.value = function (...args: any[]) {
+      // Check if this endpoint should be excluded from Swagger docs
+      const thisInstance = this as any;
+      const methodName = propertyKey.toString();
+      const endpointToCheck = Reflect.getMetadata('api:shouldExclude', target, methodName) as string;
+
+      if (!isEndpointEnabled(thisInstance, endpointToCheck)) {
+        // If not enabled, apply ApiExcludeEndpoint (this won't have effect at runtime,
+        // but would help if the metadata is read by other processes)
+        ApiExcludeEndpoint()(target, methodName, descriptor);
+      }
+
+      return originalMethod.apply(this, args);
+    };
+
+    return descriptor;
+  };
 }

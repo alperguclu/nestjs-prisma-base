@@ -1,6 +1,6 @@
 {
   "name": "nestjs-prisma-base",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "A reusable NestJS module for Prisma ORM with base classes for controller, service and DTOs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

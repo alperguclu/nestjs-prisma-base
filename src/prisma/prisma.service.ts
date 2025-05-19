@@ -8,7 +8,23 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
   constructor(@Optional() customClient?: any) {
     this.prismaClient = customClient;
-    // Remove the else block entirely - no fallback to default client
+
+    // Set up a proxy to properly forward all properties and method calls
+    return new Proxy(this, {
+      get: (target: any, prop: string | symbol) => {
+        // First check if the property exists on the service
+        if (prop in target) {
+          return target[prop];
+        }
+
+        // If not, forward to the prismaClient
+        if (target.prismaClient) {
+          return target.prismaClient[prop];
+        }
+
+        return undefined;
+      },
+    });
   }
 
   async onModuleInit() {
@@ -33,7 +49,4 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
       });
     }
   }
-
-  // Forward all methods and properties to the underlying PrismaClient
-  [key: string]: any;
 }

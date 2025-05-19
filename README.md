@@ -37,6 +37,124 @@ import { PrismaModule } from 'nestjs-prisma-base';
 export class AppModule {}
 ```
 
+### Using Multiple Prisma Clients
+
+When working with multiple databases that have different schemas, each schema requires its own Prisma client. This package supports using multiple clients in the same application.
+
+```typescript
+import { Module } from '@nestjs/common';
+import { PrismaModule } from 'nestjs-prisma-base';
+import { PrismaClient as UsersDbClient } from './prisma/generated/users-client';
+import { PrismaClient as ProductsDbClient } from './prisma/generated/products-client';
+
+@Module({
+  imports: [
+    // Register the Users database client
+    PrismaModule.forRoot({
+      prismaClient: new UsersDbClient({
+        datasources: {
+          db: { url: process.env.USERS_DATABASE_URL },
+        },
+      }),
+      providerToken: 'USERS_PRISMA_SERVICE',
+      isGlobal: true, // Set as the default service for the app
+    }),
+
+    // Register the Products database client
+    PrismaModule.forRoot({
+      prismaClient: new ProductsDbClient({
+        datasources: {
+          db: { url: process.env.PRODUCTS_DATABASE_URL },
+        },
+      }),
+      providerToken: 'PRODUCTS_PRISMA_SERVICE',
+      isGlobal: false, // Don't register globally to avoid conflicts
+    }),
+
+    // Feature modules
+    UsersModule,
+    ProductsModule,
+  ],
+})
+export class AppModule {}
+```
+
+Then inject the correct service in your feature modules:
+
+```typescript
+// Users database service
+@Injectable()
+@ModelName('user')
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
+  constructor(@Inject('USERS_PRISMA_SERVICE') prisma: PrismaService) {
+    super(prisma);
+  }
+}
+
+// Products database service
+@Injectable()
+@ModelName('product')
+export class ProductService extends BaseService<Product, CreateProductDto, UpdateProductDto> {
+  constructor(@Inject('PRODUCTS_PRISMA_SERVICE') prisma: PrismaService) {
+    super(prisma);
+  }
+}
+```
+
+#### Alternative: Create Feature-Specific Modules
+
+For better organization, you can create separate modules for each database:
+
+```typescript
+// users-db.module.ts
+@Module({
+  providers: [
+    {
+      provide: 'USERS_PRISMA_SERVICE',
+      useFactory: () => {
+        return new PrismaService(
+          new UsersDbClient({
+            datasources: {
+              db: { url: process.env.USERS_DATABASE_URL },
+            },
+          })
+        );
+      },
+    },
+  ],
+  exports: ['USERS_PRISMA_SERVICE'],
+})
+export class UsersDbModule {}
+
+// products-db.module.ts
+@Module({
+  imports: [
+    PrismaModule.forRoot({
+      prismaClient: new ProductsDbClient({
+        datasources: {
+          db: { url: process.env.PRODUCTS_DATABASE_URL },
+        },
+      }),
+      providerToken: 'PRODUCTS_PRISMA_SERVICE',
+      isGlobal: false,
+    }),
+  ],
+  exports: ['PRODUCTS_PRISMA_SERVICE'],
+})
+export class ProductsDbModule {}
+```
+
+Then import these modules in your feature modules:
+
+```typescript
+@Module({
+  imports: [UsersDbModule],
+  controllers: [UserController],
+  providers: [UserService],
+})
+export class UsersModule {}
+```
+
 #### 2. Create your entity DTOs by extending the base DTOs
 
 ```typescript
@@ -274,3 +392,54 @@ export class UserController extends BaseController<User, CreateUserDto, UpdateUs
 ## License
 
 MIT
+
+#### Simplified: Using forFeature for Multiple Databases
+
+For an even cleaner approach, use the `forFeature` method to register databases:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { PrismaModule } from 'nestjs-prisma-base';
+import { PrismaClient as UsersDbClient } from './prisma/generated/users-client';
+import { PrismaClient as ProductsDbClient } from './prisma/generated/products-client';
+
+@Module({
+  imports: [
+    // Register both database clients
+    PrismaModule.forFeature({
+      name: 'users',
+      prismaClient: new UsersDbClient({
+        datasources: {
+          db: { url: process.env.USERS_DATABASE_URL },
+        },
+      }),
+    }),
+
+    PrismaModule.forFeature({
+      name: 'products',
+      prismaClient: new ProductsDbClient({
+        datasources: {
+          db: { url: process.env.PRODUCTS_DATABASE_URL },
+        },
+      }),
+    }),
+
+    // Feature modules
+    UsersModule,
+    ProductsModule,
+  ],
+})
+export class AppModule {}
+```
+
+Then inject them in your services:
+
+```typescript
+@Injectable()
+@ModelName('user')
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
+  constructor(@Inject('USERS_PRISMA_SERVICE') prisma: PrismaService) {
+    super(prisma);
+  }
+}
+```

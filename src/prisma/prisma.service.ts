@@ -2,27 +2,43 @@ import { INestApplication, Injectable, OnModuleDestroy, OnModuleInit } from '@ne
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  constructor() {
-    super({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-    });
+export class PrismaService implements OnModuleInit, OnModuleDestroy {
+  private prismaClient: any;
+
+  constructor(customClient?: any) {
+    if (customClient) {
+      this.prismaClient = customClient;
+    } else {
+      // In a multi-schema app, all instances should be provided explicitly
+      this.prismaClient = new PrismaClient({
+        log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+      });
+    }
   }
 
   async onModuleInit() {
-    await this.$connect();
+    if (this.prismaClient) {
+      await this.prismaClient.$connect();
+    }
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
+    if (this.prismaClient) {
+      await this.prismaClient.$disconnect();
+    }
   }
 
   /**
    * Helper method to apply Prisma middleware to a NestJS app
    */
   async enableShutdownHooks(app: INestApplication) {
-    (this as any).$on('beforeExit', async () => {
-      await app.close();
-    });
+    if (this.prismaClient) {
+      this.prismaClient.$on('beforeExit', async () => {
+        await app.close();
+      });
+    }
   }
+
+  // Forward all methods and properties to the underlying PrismaClient
+  [key: string]: any;
 }

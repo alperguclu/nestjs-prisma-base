@@ -3,9 +3,9 @@ import { PrismaService } from './prisma.service';
 
 export interface PrismaModuleOptions {
   /**
-   * Custom Prisma client instance
+   * Custom Prisma client instance (required)
    */
-  prismaClient?: any;
+  prismaClient: any;
 
   /**
    * Whether this module should be registered as global
@@ -28,7 +28,7 @@ export interface PrismaFeatureOptions {
   name: string;
 
   /**
-   * Prisma client instance for this feature
+   * Prisma client instance for this feature (required)
    */
   prismaClient: any;
 
@@ -38,17 +38,18 @@ export interface PrismaFeatureOptions {
   providerToken?: string | symbol;
 }
 
-@Module({
-  providers: [PrismaService],
-  exports: [PrismaService],
-})
+@Module({})
 export class PrismaModule {
   /**
    * Register the PrismaModule
    * @param options Configuration options for the PrismaModule
    */
-  static forRoot(options?: PrismaModuleOptions): DynamicModule {
+  static forRoot(options: PrismaModuleOptions): DynamicModule {
     const providerToken = options?.providerToken || PrismaService;
+
+    if (!options.prismaClient) {
+      throw new Error('PrismaClient instance is required when using PrismaModule.forRoot()');
+    }
 
     return {
       global: options?.isGlobal !== false,
@@ -57,12 +58,7 @@ export class PrismaModule {
         {
           provide: providerToken,
           useFactory: () => {
-            if (options?.prismaClient) {
-              // Use the provided custom client
-              return new PrismaService(options.prismaClient);
-            }
-            // Default behavior - no arguments
-            return new PrismaService();
+            return new PrismaService(options.prismaClient);
           },
         },
       ],
@@ -76,6 +72,10 @@ export class PrismaModule {
    */
   static forFeature(options: PrismaFeatureOptions): DynamicModule {
     const providerToken = options.providerToken || `${options.name.toUpperCase()}_PRISMA_SERVICE`;
+
+    if (!options.prismaClient) {
+      throw new Error('PrismaClient instance is required when using PrismaModule.forFeature()');
+    }
 
     return {
       module: PrismaModule,

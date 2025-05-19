@@ -1,19 +1,14 @@
 import { INestApplication, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+// Remove default import since we won't use it
+// import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private prismaClient: any;
 
   constructor(@Optional() customClient?: any) {
-    if (customClient) {
-      this.prismaClient = customClient;
-    } else {
-      // In a multi-schema app, all instances should be provided explicitly
-      this.prismaClient = new PrismaClient({
-        log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-      });
-    }
+    this.prismaClient = customClient;
+    // Remove the else block entirely - no fallback to default client
   }
 
   async onModuleInit() {

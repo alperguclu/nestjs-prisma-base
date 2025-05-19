@@ -5,6 +5,7 @@ import { INestApplication, Injectable, OnModuleDestroy, OnModuleInit, Optional }
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private prismaClient: any;
+  [key: string]: any;
 
   constructor(@Optional() customClient?: any) {
     this.prismaClient = customClient;

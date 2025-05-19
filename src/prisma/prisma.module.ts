@@ -57,7 +57,12 @@ export class PrismaModule {
         {
           provide: providerToken,
           useFactory: () => {
-            return new PrismaService(options?.prismaClient);
+            if (options?.prismaClient) {
+              // Use the provided custom client
+              return new PrismaService(options.prismaClient);
+            }
+            // Default behavior - no arguments
+            return new PrismaService();
           },
         },
       ],

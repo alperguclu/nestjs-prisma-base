@@ -1,11 +1,11 @@
-import { INestApplication, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { INestApplication, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private prismaClient: any;
 
-  constructor(customClient?: any) {
+  constructor(@Optional() customClient?: any) {
     if (customClient) {
       this.prismaClient = customClient;
     } else {

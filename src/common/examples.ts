@@ -113,7 +113,9 @@ export class UserModule {}
 // 5. Use in your main app module
 @Module({
   imports: [
-    PrismaModule.forRoot(),
+    PrismaModule.forRoot({
+      prismaClient: new (require('@prisma/client').PrismaClient)(),
+    }),
     UserModule,
     // Other modules
   ],

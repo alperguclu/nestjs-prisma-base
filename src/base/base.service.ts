@@ -273,11 +273,34 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
   }
 
   /**
+   * Convert ID to the appropriate type based on the model schema
+   * @param id ID value (string or number)
+   * @returns Converted ID value
+   */
+  protected convertId(id: string | number): string | number {
+    // If already a number, return as-is
+    if (typeof id === 'number') {
+      return id;
+    }
+
+    // Try to convert string to number if it looks like an integer
+    const numericId = parseInt(id, 10);
+    if (!isNaN(numericId) && numericId.toString() === id) {
+      return numericId;
+    }
+
+    // Return as string (for UUID or other string-based IDs)
+    return id;
+  }
+
+  /**
    * Find a record by ID
    */
   async findOne(id: string | number): Promise<T> {
+    const convertedId = this.convertId(id);
+
     const record = await this.prisma[this.modelName].findUnique({
-      where: { id },
+      where: { id: convertedId },
     });
 
     if (!record) {
@@ -300,9 +323,11 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
    * Update a record
    */
   async update(id: string | number, data: UpdateDto): Promise<T> {
+    const convertedId = this.convertId(id);
+
     try {
       return (await this.prisma[this.modelName].update({
-        where: { id },
+        where: { id: convertedId },
         data,
       })) as T;
     } catch (error: any) {
@@ -317,9 +342,11 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
    * Delete a record
    */
   async remove(id: string | number): Promise<T> {
+    const convertedId = this.convertId(id);
+
     try {
       return (await this.prisma[this.modelName].delete({
-        where: { id },
+        where: { id: convertedId },
       })) as T;
     } catch (error: any) {
       if (error?.code === 'P2025') {

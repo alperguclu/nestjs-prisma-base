@@ -1,4 +1,4 @@
-import { DynamicModule, Type } from '@nestjs/common';
+import { DynamicModule, Type, Controller, Inject } from '@nestjs/common';
 import { BaseService } from '../base/base.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaService } from '../prisma/prisma.service';
@@ -56,48 +56,35 @@ export interface ModelModuleOptions<T = any, CreateDto = any, UpdateDto = any> {
 export function createModelModule<T = any, CreateDto = any, UpdateDto = any>(options: ModelModuleOptions<T, CreateDto, UpdateDto>): DynamicModule {
   const { modelName, routePath = modelName, serviceType, enabledEndpoints = [], enableAllEndpoints = false, providers = [], imports = [], exports = [] } = options;
 
-  // Create a dynamic controller with the specified configuration
-  const controllerFactory = (service: BaseService<T, CreateDto, UpdateDto>) => {
-    // Use the specified endpoint configuration
-    let controllerClass = createModelController<T, CreateDto, UpdateDto>(modelName, routePath, service.constructor as Type<BaseService<T, CreateDto, UpdateDto>>);
-
-    // Apply endpoint configuration
-    if (enableAllEndpoints) {
-      controllerClass = EnableEndpoint('*')(controllerClass);
-    } else if (enabledEndpoints.length > 0) {
-      enabledEndpoints.forEach((endpoint) => {
-        controllerClass = EnableEndpoint(endpoint)(controllerClass);
-      });
-    }
-
-    // Return the configured controller
-    return controllerClass;
-  };
-
   // Create a dynamic service if not provided
-  const serviceFactory = serviceType ? serviceType : createModelService<T, CreateDto, UpdateDto>(modelName, modelName);
+  const ServiceClass = serviceType ? serviceType : createModelService<T, CreateDto, UpdateDto>(modelName, modelName);
+
+  // Create the controller class
+  let ControllerClass = createModelController<T, CreateDto, UpdateDto>(modelName, routePath, ServiceClass);
+
+  // Apply endpoint configuration
+  if (enableAllEndpoints) {
+    ControllerClass = EnableEndpoint('*')(ControllerClass);
+  } else if (enabledEndpoints.length > 0) {
+    enabledEndpoints.forEach((endpoint) => {
+      ControllerClass = EnableEndpoint(endpoint)(ControllerClass);
+    });
+  }
 
   // Define providers
   const moduleProviders = [
     {
       provide: `${modelName}Service`,
-      useFactory: (prisma: PrismaService) => new serviceFactory(prisma),
+      useFactory: (prisma: PrismaService) => new ServiceClass(prisma),
       inject: [PrismaService],
-    },
-    {
-      provide: `${modelName}Controller`,
-      useFactory: (service: BaseService<T, CreateDto, UpdateDto>) => {
-        const ControllerClass = controllerFactory(service);
-        return new ControllerClass(service);
-      },
-      inject: [`${modelName}Service`],
     },
     ...providers,
   ];
 
   return {
-    module: PrismaModule,
+    module: class DynamicPrismaModule {},
     imports: [PrismaModule, ...imports],
+    controllers: [ControllerClass],
     providers: moduleProviders,
     exports: [`${modelName}Service`, ...exports],
   };
@@ -125,8 +112,9 @@ export function createModelController<T, CreateDto, UpdateDto>(modelName: string
   const { BaseController } = require('../base/base.controller');
 
   // Create a controller class that extends BaseController
+  @Controller(routePath)
   class ModelController extends BaseController<T, CreateDto, UpdateDto> {
-    constructor(service: BaseService<T, CreateDto, UpdateDto>) {
+    constructor(@Inject(`${modelName}Service`) service: BaseService<T, CreateDto, UpdateDto>) {
       super(service);
     }
   }
@@ -135,13 +123,6 @@ export function createModelController<T, CreateDto, UpdateDto>(modelName: string
   Object.defineProperty(ModelController, 'name', {
     value: `${modelName}Controller`,
   });
-
-  // Set the path metadata for routing
-  Reflect.defineMetadata('path', routePath, ModelController);
-
-  // Ensure endpoints are disabled by default by not adding any ENABLED_ENDPOINTS_KEY metadata
-  // This is important because the base controller will check for this metadata
-  // and only enable endpoints that are explicitly enabled
 
   return ModelController;
 }

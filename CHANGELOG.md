@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2024-12-19
+
+### Fixed
+
+- **Type Conversion**: Fixed critical bug where BaseService was not converting string route parameters to integers
+  - Added `convertId()` method to handle automatic type conversion for ID parameters
+  - Fixed 500 errors in `findOne()`, `update()`, and `remove()` methods when using integer IDs
+  - Supports both integer and string-based IDs (UUID) automatically
+- **Factory Modules**: Fixed critical bug where `createModelModule()` factory was not properly registering controllers
+  - Controllers are now properly registered in the module's `controllers` array
+  - Fixed 404 errors for factory-generated modules (Posts, Categories, etc.)
+  - Added proper dependency injection using `@Inject()` decorator
+  - Added `@Controller()` decorator to dynamically created controllers
+
+### Technical Details
+
+- Enhanced BaseService with intelligent ID type detection and conversion
+- Improved module factory architecture for better NestJS integration
+- Resolved controller registration issues that prevented factory modules from working
+
 ## [0.6.0] - 2024-12-19
 
 ### Added

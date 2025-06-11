@@ -14,7 +14,8 @@ npm install nestjs-prisma-base
 - Base service with common CRUD operations
 - Base controller with configurable REST endpoints
 - **Enhanced pagination with metadata** - NEW in v0.5.0
-- **Limit protection and validation** - NEW in v0.6.0
+- **Limit protection and validation** - NEW in v0.5.1
+- **Search and filtering capabilities** - NEW in v0.6.0
 - Base DTOs for standardizing request/response data
 - Support for multiple Prisma clients/databases
 - Factory functions to auto-generate components
@@ -76,7 +77,7 @@ export class UserResponseDto extends BaseResponseDto {
 ```typescript
 // user.service.ts
 import { Injectable } from '@nestjs/common';
-import { BaseService } from 'nestjs-prisma-base';
+import { BaseService, SearchConfig } from 'nestjs-prisma-base';
 import { PrismaService } from 'nestjs-prisma-base';
 import { User } from '@prisma/client';
 import { CreateUserDto, UpdateUserDto } from './user.dto';
@@ -84,6 +85,14 @@ import { CreateUserDto, UpdateUserDto } from './user.dto';
 @Injectable()
 export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
   protected readonly modelName = 'user'; // Prisma model name
+
+  // Configure search functionality
+  protected searchConfig: SearchConfig = {
+    defaultSearchFields: ['name', 'email'], // Fields to search by default
+    caseSensitive: false, // Case-insensitive search
+    searchMode: 'contains', // Search mode
+    maxSearchFields: 5, // Max fields allowed in search
+  };
 
   constructor(protected readonly prisma: PrismaService) {
     super(prisma);
@@ -172,7 +181,134 @@ interface PaginationMeta {
 }
 ```
 
-## Limit Protection (v0.6.0+)
+## Search and Filtering (v0.6.0+)
+
+Powerful search and filtering capabilities with configurable options:
+
+### Basic Search Usage
+
+```typescript
+// GET /users?search=john&page=1&limit=10
+// Searches for "john" in default search fields (name, email)
+
+// GET /users?search=john&searchFields=name,email
+// Searches for "john" only in specified fields
+
+// GET /users?sortBy=name&sortOrder=asc
+// Sort results by name in ascending order
+
+// GET /users?status=active&role=admin
+// Filter by status=active AND role=admin
+```
+
+### Search Configuration
+
+Configure search behavior in your service:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { BaseService, SearchConfig } from 'nestjs-prisma-base';
+
+@Injectable()
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
+  protected readonly modelName = 'user';
+
+  // Configure search functionality
+  protected searchConfig: SearchConfig = {
+    defaultSearchFields: ['name', 'email'], // Fields to search by default
+    caseSensitive: false, // Case-insensitive search
+    searchMode: 'contains', // 'contains' | 'startsWith' | 'endsWith'
+    maxSearchFields: 5, // Maximum fields allowed in single search
+  };
+
+  constructor(protected readonly prisma: PrismaService) {
+    super(prisma);
+  }
+}
+```
+
+### Search Options
+
+```typescript
+// In your service methods
+import { BasicSearchOptions } from 'nestjs-prisma-base';
+
+const searchOptions: BasicSearchOptions = {
+  search: 'john', // Search term
+  searchFields: ['name', 'email'], // Fields to search in
+  filters: {
+    // Exact match filters
+    status: 'active',
+    role: 'admin',
+  },
+  orderBy: {
+    // Sorting
+    name: 'asc',
+    createdAt: 'desc',
+  },
+};
+
+const results = await this.findAll(1, 20, searchOptions);
+```
+
+### Search Modes
+
+```typescript
+// Different search behaviors
+protected searchConfig: SearchConfig = {
+  defaultSearchFields: ['name', 'email'],
+
+  // Contains (default) - matches anywhere in field
+  searchMode: 'contains',    // "john" matches "johnsmith" and "ajohn"
+
+  // Starts with - matches beginning of field
+  searchMode: 'startsWith',  // "john" matches "johnsmith" but not "ajohn"
+
+  // Ends with - matches end of field
+  searchMode: 'endsWith',    // "john" matches "ajohn" but not "johnsmith"
+};
+```
+
+### Programmatic Search
+
+```typescript
+// In your service
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
+  async searchActiveUsers(searchTerm: string): Promise<PaginationResult<User>> {
+    const searchOptions: BasicSearchOptions = {
+      search: searchTerm,
+      filters: { status: 'active' },
+      orderBy: { name: 'asc' },
+    };
+
+    return this.findAll(1, 20, searchOptions);
+  }
+
+  async findUsersByRole(role: string): Promise<User[]> {
+    const searchOptions: BasicSearchOptions = {
+      filters: { role },
+      orderBy: { name: 'asc' },
+    };
+
+    return this.findAllSimple(1, 100, searchOptions);
+  }
+}
+```
+
+### Advanced Query Examples
+
+```typescript
+// Complex search with multiple filters
+GET /users?search=john&searchFields=name&status=active&role=admin&sortBy=createdAt&sortOrder=desc
+
+// Search in multiple fields with filters
+GET /products?search=laptop&searchFields=name,description,sku&category=electronics&inStock=true
+
+// Pagination with search
+GET /orders?search=pending&status=pending&page=2&limit=25&sortBy=createdAt&sortOrder=desc
+```
+
+## Limit Protection (v0.5.1+)
 
 Protect your application from performance issues by configuring pagination limits:
 

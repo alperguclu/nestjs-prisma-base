@@ -7,6 +7,7 @@ export * from './base/base.controller';
 export * from './base/base.service';
 export * from './base/base.dto';
 export * from './base/pagination.interface';
+export * from './base/search.interface';
 
 // Decorators exports
 export * from './decorators/model-name.decorator';

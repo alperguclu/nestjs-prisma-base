@@ -2,6 +2,7 @@ import { Body, Delete, Get, NotFoundException, Param, Patch, Post, Query } from 
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { BaseService } from './base.service';
 import { PaginationResult } from './pagination.interface';
+import { BasicSearchOptions } from './search.interface';
 import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType, ApiExcludeDisabledEndpoint } from '../decorators/endpoint.decorator';
 
 /**
@@ -75,15 +76,62 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
   }
 
   /**
-   * Get all records with enhanced pagination metadata
-   * Returns data with pagination information including total count, pages, etc.
+   * Parse query parameters into search options
+   * @param query Raw query parameters
+   * @returns Parsed search options
+   */
+  protected parseSearchOptions(query: any): BasicSearchOptions {
+    const options: BasicSearchOptions = {};
+
+    // Handle search term
+    if (query.search && typeof query.search === 'string') {
+      options.search = query.search;
+    }
+
+    // Handle search fields (comma-separated string)
+    if (query.searchFields && typeof query.searchFields === 'string') {
+      options.searchFields = query.searchFields
+        .split(',')
+        .map((field: string) => field.trim())
+        .filter(Boolean);
+    }
+
+    // Handle sorting
+    if (query.sortBy && typeof query.sortBy === 'string') {
+      const sortOrder = query.sortOrder === 'desc' ? 'desc' : 'asc';
+      options.orderBy = { [query.sortBy]: sortOrder };
+    }
+
+    // Handle additional filters (exclude known pagination and search params)
+    const excludeParams = ['page', 'limit', 'search', 'searchFields', 'sortBy', 'sortOrder'];
+    const filters: Record<string, any> = {};
+
+    Object.entries(query).forEach(([key, value]) => {
+      if (!excludeParams.includes(key) && value !== undefined && value !== null && value !== '') {
+        filters[key] = value;
+      }
+    });
+
+    if (Object.keys(filters).length > 0) {
+      options.filters = filters;
+    }
+
+    return options;
+  }
+
+  /**
+   * Get all records with enhanced pagination metadata and search capabilities
+   * Supports search, filtering, and sorting through query parameters
    */
   @Get()
-  findAll(@Query('page') page?: string, @Query('limit') limit?: string): Promise<PaginationResult<T>> {
+  findAll(@Query('page') page?: string, @Query('limit') limit?: string, @Query() query?: any): Promise<PaginationResult<T>> {
     if (!this.isEndpointEnabled(EndpointType.FIND_ALL)) {
       throw new NotFoundException('Endpoint not available');
     }
-    return this.service.findAll(page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : 10);
+
+    const searchOptions = this.parseSearchOptions(query || {});
+
+    return this.service.findAll(page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : undefined, searchOptions);
   }
 
   /**

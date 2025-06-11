@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2024-12-19
+
+### Added
+
+- **Search and Filtering**: Comprehensive search functionality with configurable options
+- `BasicSearchOptions` interface for search parameters
+- `SearchConfig` interface for service-level search configuration
+- Text search across configurable fields with multiple search modes
+- Simple key-value filtering support
+- Sorting/ordering capabilities with multiple fields
+- Query parameter parsing in BaseController for search, filters, and sorting
+- Search field validation and limits for security
+
+### Changed
+
+- **BREAKING**: `findAll()` method signature now accepts optional `BasicSearchOptions` parameter
+- **BREAKING**: `findAllSimple()` method signature now accepts optional `BasicSearchOptions` parameter
+- Enhanced BaseController to parse and handle search query parameters
+- Updated examples with comprehensive search and filtering scenarios
+
+### Security
+
+- Configurable maximum search fields limit prevents abuse
+- Search functionality disabled by default (requires configuration)
+- Validation of search fields against allowed configuration
+
+### Documentation
+
+- Added comprehensive search and filtering documentation to README
+- Updated examples with various search configuration patterns
+- Documented query parameter usage and programmatic search methods
+
 ## [0.5.1] - 2024-12-19
 
 ### Added

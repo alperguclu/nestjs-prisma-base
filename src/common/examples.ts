@@ -8,6 +8,7 @@ import { BaseController } from '../base/base.controller';
 import { BaseService } from '../base/base.service';
 import { BaseCreateDto, BaseUpdateDto, BaseResponseDto } from '../base/base.dto';
 import { PaginationResult, PaginationConfig } from '../base/pagination.interface';
+import { BasicSearchOptions, SearchConfig } from '../base/search.interface';
 import { ModelName } from '../decorators/model-name.decorator';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaService } from '../prisma/prisma.service';
@@ -19,6 +20,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  status?: string;
 }
 
 // Example DTOs
@@ -68,9 +70,24 @@ export class UserController extends BaseController<User, CreateUserDto, UpdateUs
     // }
     return this.service.findAll(1, 10);
   }
+
+  // Example of using search functionality
+  @Get('search')
+  @EnableEndpoint('search')
+  async searchUsers(): Promise<PaginationResult<User>> {
+    // Example search with options
+    const searchOptions: BasicSearchOptions = {
+      search: 'john',
+      searchFields: ['name', 'email'],
+      filters: { status: 'active' },
+      orderBy: { name: 'asc' },
+    };
+
+    return this.service.findAll(1, 20, searchOptions);
+  }
 }
 
-// Example 2: Custom service implementation with pagination configuration
+// Example 2: Custom service implementation with pagination and search configuration
 @Injectable()
 export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
   protected readonly modelName = 'user';
@@ -80,6 +97,14 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
     defaultLimit: 20, // Default 20 items per page
     maxLimit: 200, // Maximum 200 items per page
     allowUnlimited: false, // Don't allow unlimited results
+  };
+
+  // Configure search functionality
+  protected searchConfig: SearchConfig = {
+    defaultSearchFields: ['name', 'email'], // Fields to search by default
+    caseSensitive: false, // Case-insensitive search
+    searchMode: 'contains', // Search mode
+    maxSearchFields: 5, // Max fields allowed in search
   };
 
   constructor(protected readonly prisma: PrismaService) {
@@ -96,12 +121,49 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
     // Use the deprecated method for backward compatibility
     return this.findAllSimple(1, 10);
   }
+
+  // Example of advanced search usage
+  async searchActiveUsers(searchTerm: string): Promise<PaginationResult<User>> {
+    const searchOptions: BasicSearchOptions = {
+      search: searchTerm,
+      filters: { status: 'active' },
+      orderBy: { name: 'asc' },
+    };
+
+    return this.findAll(1, 20, searchOptions);
+  }
 }
 
-// Example 3: Service with unlimited results allowed (use with caution!)
+// Example 3: Service with different search configuration
+@Injectable()
+export class ProductService extends BaseService<any, any, any> {
+  protected readonly modelName = 'product';
+
+  // More restrictive search configuration
+  protected searchConfig: SearchConfig = {
+    defaultSearchFields: ['name', 'description', 'sku'],
+    caseSensitive: false,
+    searchMode: 'startsWith', // Only match from beginning
+    maxSearchFields: 3,
+  };
+
+  constructor(protected readonly prisma: PrismaService) {
+    super(prisma);
+  }
+}
+
+// Example 4: Service with no search functionality
 @Injectable()
 export class LogService extends BaseService<any, any, any> {
   protected readonly modelName = 'log';
+
+  // No search fields configured - search will be disabled
+  protected searchConfig: SearchConfig = {
+    defaultSearchFields: [], // Empty = no search functionality
+    caseSensitive: false,
+    searchMode: 'contains',
+    maxSearchFields: 0,
+  };
 
   // Allow unlimited results for administrative operations
   protected paginationConfig: PaginationConfig = {
@@ -121,7 +183,7 @@ export class LogService extends BaseService<any, any, any> {
   }
 }
 
-// Example 4: Service with strict limits for high-traffic endpoints
+// Example 5: Service with strict limits for high-traffic endpoints
 @Injectable()
 export class PublicDataService extends BaseService<any, any, any> {
   protected readonly modelName = 'publicData';
@@ -133,12 +195,20 @@ export class PublicDataService extends BaseService<any, any, any> {
     allowUnlimited: false,
   };
 
+  // Limited search capability
+  protected searchConfig: SearchConfig = {
+    defaultSearchFields: ['title'],
+    caseSensitive: false,
+    searchMode: 'contains',
+    maxSearchFields: 1, // Only allow single field search
+  };
+
   constructor(protected readonly prisma: PrismaService) {
     super(prisma);
   }
 }
 
-// Example 5: Using module factory with specific endpoints enabled
+// Example 6: Using module factory with specific endpoints enabled
 // Note: Without enabledEndpoints or enableAllEndpoints, no endpoints would be exposed
 export const UsersModule = createModelModule({
   modelName: 'user',
@@ -146,13 +216,13 @@ export const UsersModule = createModelModule({
   enabledEndpoints: [EndpointType.FIND_ALL, EndpointType.FIND_ONE, EndpointType.CREATE],
 });
 
-// Example 6: Using module factory with all endpoints enabled
+// Example 7: Using module factory with all endpoints enabled
 export const ProductModule = createModelModule({
   modelName: 'product',
   enableAllEndpoints: true, // This is necessary to expose any endpoints
 });
 
-// Example 7: Using module factory with all endpoints enabled except DELETE
+// Example 8: Using module factory with all endpoints enabled except DELETE
 export const CategoryModule = createModelModule({
   modelName: 'category',
   enableAllEndpoints: true, // First enable all
@@ -165,7 +235,7 @@ export const CategoryModule = createModelModule({
   },
 });
 
-// Example 8: Create a controller that uses decorators to disable specific endpoints
+// Example 9: Create a controller that uses decorators to disable specific endpoints
 @Controller('orders')
 @EnableAllEndpoints() // First enable all endpoints
 @DisableEndpoint(EndpointType.REMOVE) // Then selectively disable some

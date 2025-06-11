@@ -47,7 +47,9 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
     // Handle unlimited requests
     if (limit === 0 || limit === -1) {
       if (!this.paginationConfig.allowUnlimited) {
-        throw new BadRequestException(`Unlimited results are not allowed. Maximum limit is ${this.paginationConfig.maxLimit}`);
+        throw new BadRequestException(
+          `Unlimited results are not allowed. Maximum limit is ${this.paginationConfig.maxLimit}`
+        );
       }
       // Return a very large number for unlimited (but still finite for calculations)
       return Number.MAX_SAFE_INTEGER;
@@ -60,7 +62,9 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
 
     // Check maximum limit
     if (limit > this.paginationConfig.maxLimit) {
-      throw new BadRequestException(`Limit ${limit} exceeds maximum allowed limit of ${this.paginationConfig.maxLimit}`);
+      throw new BadRequestException(
+        `Limit ${limit} exceeds maximum allowed limit of ${this.paginationConfig.maxLimit}`
+      );
     }
 
     return limit;
@@ -109,7 +113,10 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
     // Handle search term
     if (options.search && options.search.trim()) {
       const searchTerm = options.search.trim();
-      const fieldsToSearch = options.searchFields && options.searchFields.length > 0 ? this.validateSearchFields(options.searchFields) : this.searchConfig.defaultSearchFields;
+      const fieldsToSearch =
+        options.searchFields && options.searchFields.length > 0
+          ? this.validateSearchFields(options.searchFields)
+          : this.searchConfig.defaultSearchFields;
 
       if (fieldsToSearch.length > 0) {
         const searchConditions = fieldsToSearch.map((field) => {

@@ -7,7 +7,10 @@ export class RelationValidator {
   /**
    * Validate requested includes against the relation configuration
    */
-  static validateIncludes(requestedIncludes: string[] | Record<string, boolean | any> | undefined, config: RelationConfig): RelationValidationResult {
+  static validateIncludes(
+    requestedIncludes: string[] | Record<string, boolean | any> | undefined,
+    config: RelationConfig
+  ): RelationValidationResult {
     const result: RelationValidationResult = {
       validatedIncludes: {},
       invalidKeys: [],
@@ -164,7 +167,10 @@ export class RelationValidator {
   /**
    * Merge default includes with requested includes
    */
-  static mergeIncludes(defaultIncludes: Record<string, boolean | any> | undefined, requestedIncludes: Record<string, boolean | any> | undefined): Record<string, boolean | any> {
+  static mergeIncludes(
+    defaultIncludes: Record<string, boolean | any> | undefined,
+    requestedIncludes: Record<string, boolean | any> | undefined
+  ): Record<string, boolean | any> {
     const merged = { ...(defaultIncludes || {}) };
 
     if (requestedIncludes) {

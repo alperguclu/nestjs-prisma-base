@@ -4,7 +4,14 @@ import { BaseService } from './base.service';
 import { PaginationResult } from './pagination.interface';
 import { BasicSearchOptions, AdvancedSearchOptions } from './search.interface';
 import { RelationValidator } from './relation-validator';
-import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType, ApiExcludeDisabledEndpoint } from '../decorators/endpoint.decorator';
+import {
+  DISABLED_ENDPOINTS_KEY,
+  ENABLED_ENDPOINTS_KEY,
+  ENDPOINT_DISABLED_KEY,
+  ENDPOINT_ENABLED_KEY,
+  EndpointType,
+  ApiExcludeDisabledEndpoint,
+} from '../decorators/endpoint.decorator';
 
 /**
  * Base controller with configurable CRUD endpoints
@@ -140,7 +147,11 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * - [key]: Additional filter fields
    */
   @Get()
-  findAll(@Query('page') page?: string, @Query('limit') limit?: string, @Query() query?: any): Promise<PaginationResult<T>> {
+  findAll(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query() query?: any
+  ): Promise<PaginationResult<T>> {
     if (!this.isEndpointEnabled(EndpointType.FIND_ALL)) {
       throw new NotFoundException('Endpoint not available');
     }
@@ -149,7 +160,11 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
 
     // Use advanced search if we have relation includes or advanced features
     if (searchOptions.requestedIncludes && searchOptions.requestedIncludes.length > 0) {
-      return this.service.findAllAdvanced(page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : undefined, searchOptions);
+      return this.service.findAllAdvanced(
+        page ? parseInt(page, 10) : 1,
+        limit ? parseInt(limit, 10) : undefined,
+        searchOptions
+      );
     }
 
     // Fall back to basic search for backward compatibility

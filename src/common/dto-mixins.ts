@@ -305,7 +305,13 @@ export type MixinType<T> = T extends Constructor<infer U> ? U : never;
 /**
  * Utility type for composing multiple mixins
  */
-export type ComposedMixin<T extends readonly Constructor[]> = T extends readonly [infer First, ...infer Rest] ? (First extends Constructor<infer U> ? (Rest extends readonly Constructor[] ? Constructor<U> & ComposedMixin<Rest> : Constructor<U>) : never) : Constructor<{}>;
+export type ComposedMixin<T extends readonly Constructor[]> = T extends readonly [infer First, ...infer Rest]
+  ? First extends Constructor<infer U>
+    ? Rest extends readonly Constructor[]
+      ? Constructor<U> & ComposedMixin<Rest>
+      : Constructor<U>
+    : never
+  : Constructor<{}>;
 
 /**
  * Utility function to compose multiple mixins

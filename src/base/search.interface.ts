@@ -15,7 +15,20 @@ export interface BasicSearchOptions {
 /**
  * Advanced filter operator types for complex queries
  */
-export type AdvancedFilterOperator = 'equals' | 'not' | 'contains' | 'startsWith' | 'endsWith' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'notIn' | 'isNull' | 'isNotNull';
+export type AdvancedFilterOperator =
+  | 'equals'
+  | 'not'
+  | 'contains'
+  | 'startsWith'
+  | 'endsWith'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'in'
+  | 'notIn'
+  | 'isNull'
+  | 'isNotNull';
 
 /**
  * Advanced filter configuration for a specific field

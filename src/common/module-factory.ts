@@ -53,8 +53,19 @@ export interface ModelModuleOptions<T = any, CreateDto = any, UpdateDto = any> {
 /**
  * Creates a module for a Prisma model with configurable endpoints
  */
-export function createModelModule<T = any, CreateDto = any, UpdateDto = any>(options: ModelModuleOptions<T, CreateDto, UpdateDto>): DynamicModule {
-  const { modelName, routePath = modelName, serviceType, enabledEndpoints = [], enableAllEndpoints = false, providers = [], imports = [], exports = [] } = options;
+export function createModelModule<T = any, CreateDto = any, UpdateDto = any>(
+  options: ModelModuleOptions<T, CreateDto, UpdateDto>
+): DynamicModule {
+  const {
+    modelName,
+    routePath = modelName,
+    serviceType,
+    enabledEndpoints = [],
+    enableAllEndpoints = false,
+    providers = [],
+    imports = [],
+    exports = [],
+  } = options;
 
   // Create a dynamic service if not provided
   const ServiceClass = serviceType ? serviceType : createModelService<T, CreateDto, UpdateDto>(modelName, modelName);
@@ -93,7 +104,10 @@ export function createModelModule<T = any, CreateDto = any, UpdateDto = any>(opt
 /**
  * Create a model service class for a specific Prisma model
  */
-export function createModelService<T, CreateDto, UpdateDto>(modelName: string, prismaModelKey: string): Type<BaseService<T, CreateDto, UpdateDto>> {
+export function createModelService<T, CreateDto, UpdateDto>(
+  modelName: string,
+  prismaModelKey: string
+): Type<BaseService<T, CreateDto, UpdateDto>> {
   class ModelService extends BaseService<T, CreateDto, UpdateDto> {
     protected readonly modelName = prismaModelKey;
   }
@@ -108,7 +122,11 @@ export function createModelService<T, CreateDto, UpdateDto>(modelName: string, p
 /**
  * Create a model controller class for a specific Prisma model
  */
-export function createModelController<T, CreateDto, UpdateDto>(modelName: string, routePath: string, serviceType: Type<BaseService<T, CreateDto, UpdateDto>>): Type<any> {
+export function createModelController<T, CreateDto, UpdateDto>(
+  modelName: string,
+  routePath: string,
+  serviceType: Type<BaseService<T, CreateDto, UpdateDto>>
+): Type<any> {
   const { BaseController } = require('../base/base.controller');
 
   // Create a controller class that extends BaseController

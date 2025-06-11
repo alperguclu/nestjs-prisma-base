@@ -1,5 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import { AdvancedSearchOptions, AdvancedFilter, AdvancedFilterOperator, QueryBuilderResult, SearchConfig } from './search.interface';
+import {
+  AdvancedSearchOptions,
+  AdvancedFilter,
+  AdvancedFilterOperator,
+  QueryBuilderResult,
+  SearchConfig,
+} from './search.interface';
 
 /**
  * Advanced query builder for constructing complex Prisma queries
@@ -42,12 +48,19 @@ export class AdvancedQueryBuilder {
    * @param searchConfig Service search configuration
    * @returns Prisma where conditions
    */
-  private static buildWhereConditions(options: AdvancedSearchOptions, searchConfig: SearchConfig): Record<string, any> | undefined {
+  private static buildWhereConditions(
+    options: AdvancedSearchOptions,
+    searchConfig: SearchConfig
+  ): Record<string, any> | undefined {
     const conditions: Record<string, any>[] = [];
 
     // Handle basic search
     if (options.search && options.search.trim()) {
-      const searchCondition = this.buildBasicSearchCondition(options.search.trim(), options.searchFields || searchConfig.defaultSearchFields, searchConfig);
+      const searchCondition = this.buildBasicSearchCondition(
+        options.search.trim(),
+        options.searchFields || searchConfig.defaultSearchFields,
+        searchConfig
+      );
       if (searchCondition) {
         conditions.push(searchCondition);
       }
@@ -97,7 +110,11 @@ export class AdvancedQueryBuilder {
    * @param searchConfig Search configuration
    * @returns Search condition
    */
-  private static buildBasicSearchCondition(searchTerm: string, searchFields: string[], searchConfig: SearchConfig): Record<string, any> | undefined {
+  private static buildBasicSearchCondition(
+    searchTerm: string,
+    searchFields: string[],
+    searchConfig: SearchConfig
+  ): Record<string, any> | undefined {
     if (searchFields.length === 0) {
       return undefined;
     }
@@ -155,7 +172,9 @@ export class AdvancedQueryBuilder {
    * @param advancedFilters Advanced filter configuration
    * @returns Advanced filter conditions
    */
-  private static buildAdvancedFilters(advancedFilters: Record<string, AdvancedFilter>): Record<string, any> | undefined {
+  private static buildAdvancedFilters(
+    advancedFilters: Record<string, AdvancedFilter>
+  ): Record<string, any> | undefined {
     const conditions: Record<string, any> = {};
 
     Object.entries(advancedFilters).forEach(([field, filter]) => {
@@ -223,20 +242,30 @@ export class AdvancedQueryBuilder {
    * @param advancedFilters Advanced filter configuration
    * @param searchConfig Search configuration
    */
-  private static validateAdvancedFilters(advancedFilters: Record<string, AdvancedFilter>, searchConfig: SearchConfig): void {
+  private static validateAdvancedFilters(
+    advancedFilters: Record<string, AdvancedFilter>,
+    searchConfig: SearchConfig
+  ): void {
     const filterCount = Object.keys(advancedFilters).length;
     const maxFilters = searchConfig.maxAdvancedFilters || 20;
 
     if (filterCount > maxFilters) {
-      throw new BadRequestException(`Too many advanced filters. Maximum allowed: ${maxFilters}, provided: ${filterCount}`);
+      throw new BadRequestException(
+        `Too many advanced filters. Maximum allowed: ${maxFilters}, provided: ${filterCount}`
+      );
     }
 
     // Validate allowed fields if configured
     if (searchConfig.allowedAdvancedFields && searchConfig.allowedAdvancedFields.length > 0) {
-      const invalidFields = Object.keys(advancedFilters).filter((field) => !searchConfig.allowedAdvancedFields!.includes(field));
+      const invalidFields = Object.keys(advancedFilters).filter(
+        (field) => !searchConfig.allowedAdvancedFields!.includes(field)
+      );
 
       if (invalidFields.length > 0) {
-        throw new BadRequestException(`Invalid advanced filter fields: ${invalidFields.join(', ')}. ` + `Allowed fields: ${searchConfig.allowedAdvancedFields.join(', ')}`);
+        throw new BadRequestException(
+          `Invalid advanced filter fields: ${invalidFields.join(', ')}. ` +
+            `Allowed fields: ${searchConfig.allowedAdvancedFields.join(', ')}`
+        );
       }
     }
 
@@ -262,11 +291,15 @@ export class AdvancedQueryBuilder {
     }
 
     if (value === undefined || value === null) {
-      throw new BadRequestException(`Advanced filter for field '${field}' with operator '${operator}' requires a value`);
+      throw new BadRequestException(
+        `Advanced filter for field '${field}' with operator '${operator}' requires a value`
+      );
     }
 
     if (arrayOperators.includes(operator) && !Array.isArray(value)) {
-      throw new BadRequestException(`Advanced filter for field '${field}' with operator '${operator}' requires an array value`);
+      throw new BadRequestException(
+        `Advanced filter for field '${field}' with operator '${operator}' requires an array value`
+      );
     }
   }
 }

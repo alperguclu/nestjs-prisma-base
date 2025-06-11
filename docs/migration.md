@@ -348,5 +348,5 @@ export class AppModule {}
 ## Need Help?
 
 - Check the [Complete Feature Guide](./features.md) for detailed examples
-- Review the [API Reference](./api/) for specific method signatures
-- Look at the [Examples Repository](https://github.com/your-org/nestjs-prisma-base-examples) for working code samples
+- Review the main [README.md](../README.md) for quick start guidance
+- [Create an Issue](https://github.com/your-org/nestjs-prisma-base/issues) for specific problems or questions

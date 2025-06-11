@@ -238,31 +238,18 @@ export class UserResponseDto extends SwaggerBaseResponseDto {
 
 ## Documentation
 
-### 📖 **Detailed Guides**
+### 📖 **Available Documentation**
 
-- [**Full Feature Guide**](./docs/features.md) - Complete feature documentation
-- [**Search & Filtering**](./docs/search-filtering.md) - Advanced search capabilities
-- [**Relation Loading**](./docs/relations.md) - Working with nested data
-- [**DTO Configuration**](./docs/dto-configuration.md) - Flexible DTO options
-- [**Mixin System**](./docs/mixins.md) - Composable DTO building
-- [**Migration Guide**](./docs/migration.md) - Upgrading between versions
+- [**Complete Feature Guide**](./docs/features.md) - Comprehensive feature documentation with examples
+- [**Migration Guide**](./docs/migration.md) - Version upgrade guide and compatibility matrix
+- [**Documentation Index**](./docs/index.md) - Complete documentation overview
 
-### 🔧 **API Reference**
+### 🚀 **Get More Help**
 
-- [**BaseService API**](./docs/api/base-service.md)
-- [**BaseController API**](./docs/api/base-controller.md)
-- [**Configuration Options**](./docs/api/configuration.md)
-
-### 📝 **Examples**
-
-- [**Basic CRUD**](./examples/basic-crud)
-- [**Advanced Search**](./examples/advanced-search)
-- [**Multiple Databases**](./examples/multiple-databases)
-- [**Custom DTOs**](./examples/custom-dtos)
-
-## Examples Repository
-
-Check out the [**nestjs-prisma-base-examples**](https://github.com/your-org/nestjs-prisma-base-examples) repository for complete working examples.
+- **Quick Questions**: Use the examples in this README
+- **Advanced Features**: Check the [Complete Feature Guide](./docs/features.md)
+- **Version Migration**: See the [Migration Guide](./docs/migration.md)
+- **Issues & Support**: [Create an Issue](https://github.com/your-org/nestjs-prisma-base/issues)
 
 ## Version History
 
@@ -273,10 +260,6 @@ Check out the [**nestjs-prisma-base-examples**](https://github.com/your-org/nest
 - **v0.6.0** - Search and filtering capabilities
 - **v0.5.0** - Enhanced pagination with metadata
 
-## Contributing
-
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
-
 ## License
 
-MIT © [Your Name](https://github.com/your-username)
+MIT

@@ -1,6 +1,6 @@
 # NestJS Prisma Base
 
-A reusable NestJS module for Prisma ORM with base classes for controllers, services, and DTOs.
+A comprehensive NestJS package providing base classes, utilities, and decorators for building CRUD APIs with Prisma ORM integration, featuring pagination, search, filtering, and relation loading capabilities.
 
 ## Installation
 
@@ -16,6 +16,11 @@ npm install nestjs-prisma-base
 - **Enhanced pagination with metadata** - NEW in v0.5.0
 - **Limit protection and validation** - NEW in v0.5.1
 - **Search and filtering capabilities** - NEW in v0.6.0
+- **Advanced search with operators** - NEW in v0.7.0
+- **Relation loading configuration** - NEW in v0.8.0
+- **Configurable Base DTOs** - NEW in v0.9.0
+- **Optional Swagger Integration** - NEW in v0.9.0
+- **Minimal DTOs for maximum control** - NEW in v0.9.0
 - Base DTOs for standardizing request/response data
 - Support for multiple Prisma clients/databases
 - Factory functions to auto-generate components
@@ -306,6 +311,300 @@ GET /products?search=laptop&searchFields=name,description,sku&category=electroni
 
 // Pagination with search
 GET /orders?search=pending&status=pending&page=2&limit=25&sortBy=createdAt&sortOrder=desc
+```
+
+## DTO Configuration & Swagger Integration (v0.9.0+)
+
+Version 0.9.0 introduces flexible DTO configuration options and optional Swagger integration, giving you multiple approaches to define your DTOs based on your project needs.
+
+### DTO Options Overview
+
+Choose the DTO approach that best fits your development style:
+
+- **Original DTOs**: `BaseCreateDto`, `BaseUpdateDto`, `BaseResponseDto` - backward compatible
+- **Configurable DTOs**: `ConfigurableBaseCreateDto`, etc. - flexible configuration system
+- **Swagger DTOs**: `SwaggerBaseCreateDto`, etc. - automatic Swagger documentation
+- **Minimal DTOs**: `MinimalBaseCreateDto`, etc. - completely empty base classes
+
+### 1. Configurable Base DTOs
+
+Configurable DTOs allow you to control field inclusion and behavior globally or per-class:
+
+```typescript
+import { ConfigurableBaseCreateDto, ConfigurableBaseUpdateDto, ConfigurableBaseResponseDto, configureDTOs } from 'nestjs-prisma-base';
+
+// Global DTO configuration (applies to all configurable DTOs)
+configureDTOs({
+  includeTimestamps: true,
+  includeId: true,
+  timestampFields: {
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  },
+});
+
+// Your DTOs extend configurable base classes
+export class CreateUserDto extends ConfigurableBaseCreateDto {
+  @IsString()
+  name: string;
+
+  @IsEmail()
+  email: string;
+}
+
+export class UserResponseDto extends ConfigurableBaseResponseDto {
+  name: string;
+  email: string;
+  // id, createdAt, updatedAt automatically included based on config
+}
+
+// Per-class configuration (overrides global config)
+UserResponseDto.configure({
+  includeTimestamps: false, // This class won't include timestamps
+});
+```
+
+### 2. Swagger Integration
+
+Automatically apply Swagger decorators when `@nestjs/swagger` is available:
+
+```typescript
+import { SwaggerBaseCreateDto, SwaggerBaseUpdateDto, SwaggerBaseResponseDto, configureSwaggerDTOs } from 'nestjs-prisma-base';
+import { ApiProperty } from '@nestjs/swagger';
+
+// Enable Swagger globally
+configureSwaggerDTOs({
+  enabled: true,
+  includeExamples: true,
+  includeDescriptions: true,
+  fieldConfig: {
+    id: { description: 'User ID', example: 1 },
+    createdAt: { description: 'Creation time', example: '2023-01-01T00:00:00Z' },
+  },
+});
+
+export class CreateUserDto extends SwaggerBaseCreateDto {
+  @ApiProperty({ description: 'User name', example: 'John Doe' })
+  @IsString()
+  name: string;
+
+  @ApiProperty({ description: 'Email address', example: 'john@example.com' })
+  @IsEmail()
+  email: string;
+}
+
+export class UserResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty({ description: 'User name', example: 'John Doe' })
+  name: string;
+
+  @ApiProperty({ description: 'Email address', example: 'john@example.com' })
+  email: string;
+  // id, createdAt, updatedAt automatically get Swagger decorators
+}
+```
+
+### 3. Minimal DTOs
+
+For developers who want complete control with no additional fields:
+
+```typescript
+import { MinimalBaseCreateDto, MinimalBaseUpdateDto, MinimalBaseResponseDto, MinimalBaseIdDto, MinimalBaseTimestampDto, MinimalBaseEntityDto } from 'nestjs-prisma-base';
+
+// Completely empty base classes
+export class CreateUserDto extends MinimalBaseCreateDto {
+  name: string;
+  email: string;
+  // Only your fields, nothing else
+}
+
+// Or use pre-built minimal variations
+export class UserIdDto extends MinimalBaseIdDto {
+  // Contains: id?: number
+}
+
+export class UserTimestampsDto extends MinimalBaseTimestampDto {
+  // Contains: createdAt?: Date, updatedAt?: Date
+}
+
+export class UserEntityDto extends MinimalBaseEntityDto {
+  // Contains: id?: number, createdAt?: Date, updatedAt?: Date
+  name: string;
+  email: string;
+}
+```
+
+### 4. PrismaModule DTO Configuration
+
+Configure DTOs at the module level for automatic setup:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { PrismaModule } from 'nestjs-prisma-base';
+import { PrismaClient } from '@prisma/client';
+
+@Module({
+  imports: [
+    PrismaModule.forRoot({
+      prismaClient: new PrismaClient(),
+      dtoOptions: {
+        // Global DTO configuration
+        dtoConfig: {
+          includeTimestamps: true,
+          includeId: true,
+          timestampFields: {
+            createdAt: 'createdAt',
+            updatedAt: 'updatedAt',
+          },
+        },
+        // Swagger integration configuration
+        swaggerIntegration: {
+          enabled: true,
+          includeExamples: true,
+          includeDescriptions: true,
+          includeTimestamps: true,
+        },
+        // Use minimal DTOs by default
+        useMinimalDTOs: false,
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+### 5. Advanced Configuration Examples
+
+#### Custom Timestamp Fields
+
+```typescript
+// Configure for databases with custom timestamp column names
+configureDTOs({
+  includeTimestamps: true,
+  timestampFields: {
+    createdAt: 'created_at', // Maps to created_at column
+    updatedAt: 'modified_at', // Maps to modified_at column
+  },
+});
+```
+
+#### Per-Service Configuration
+
+```typescript
+// Different DTO configs for different services
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
+  constructor(prisma: PrismaService) {
+    super(prisma);
+
+    // Configure DTOs specifically for this service
+    CreateUserDto.configure({ includeTimestamps: false });
+    UserResponseDto.configure({ includeId: true, includeTimestamps: true });
+  }
+}
+```
+
+#### Conditional Swagger Setup
+
+```typescript
+// Only enable Swagger in development/staging
+configureSwaggerDTOs({
+  enabled: process.env.NODE_ENV !== 'production',
+  includeExamples: true,
+  includeDescriptions: process.env.NODE_ENV === 'development',
+});
+```
+
+#### Manual Swagger Decorator Application
+
+```typescript
+import { applySwaggerDecoratorsToClass } from 'nestjs-prisma-base';
+
+// Manually apply Swagger decorators to any class
+applySwaggerDecoratorsToClass(MyCustomDto, [
+  {
+    propertyKey: 'name',
+    options: { description: 'Name field', example: 'John' },
+  },
+  {
+    propertyKey: 'email',
+    options: { description: 'Email field', example: 'john@example.com' },
+  },
+]);
+```
+
+### 6. Migration from Existing DTOs
+
+Migrating to configurable DTOs is completely optional and non-breaking:
+
+```typescript
+// Before (v0.8.x and earlier) - still works!
+export class CreateUserDto extends BaseCreateDto {
+  name: string;
+  email: string;
+}
+
+// After (v0.9.0+) - optional upgrade
+export class CreateUserDto extends ConfigurableBaseCreateDto {
+  name: string;
+  email: string;
+}
+
+// Or with Swagger support
+export class CreateUserDto extends SwaggerBaseCreateDto {
+  @ApiProperty({ description: 'User name' })
+  name: string;
+
+  @ApiProperty({ description: 'Email address' })
+  email: string;
+}
+```
+
+### 7. Configuration Utilities
+
+Check current configuration and Swagger availability:
+
+```typescript
+import { getDTOConfig, getSwaggerDTOConfig, isSwaggerIntegrationEnabled } from 'nestjs-prisma-base';
+
+// Check current DTO configuration
+const dtoConfig = getDTOConfig();
+console.log('Timestamps enabled:', dtoConfig.includeTimestamps);
+
+// Check Swagger configuration
+const swaggerConfig = getSwaggerDTOConfig();
+console.log('Swagger enabled:', swaggerConfig.enabled);
+
+// Check if Swagger is available and enabled
+if (isSwaggerIntegrationEnabled()) {
+  console.log('Swagger decorators will be applied');
+}
+```
+
+### Configuration Interface Reference
+
+```typescript
+interface DTOConfig {
+  includeTimestamps?: boolean; // Include createdAt/updatedAt fields
+  includeId?: boolean; // Include id field in response DTOs
+  swaggerEnabled?: boolean; // Enable Swagger integration
+  timestampFields?: {
+    // Custom timestamp field names
+    createdAt?: string;
+    updatedAt?: string;
+  };
+}
+
+interface SwaggerDTOConfig {
+  enabled: boolean; // Enable/disable Swagger decorators
+  includeTimestamps?: boolean; // Include timestamps in Swagger docs
+  includeExamples?: boolean; // Include examples in Swagger docs
+  includeDescriptions?: boolean; // Include descriptions in Swagger docs
+  fieldConfig?: {
+    // Custom field configurations
+    id?: { description?: string; example?: any };
+    createdAt?: { description?: string; example?: any };
+    updatedAt?: { description?: string; example?: any };
+  };
+}
 ```
 
 ## Limit Protection (v0.5.1+)

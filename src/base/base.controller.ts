@@ -2,7 +2,8 @@ import { Body, Delete, Get, NotFoundException, Param, Patch, Post, Query } from 
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { BaseService } from './base.service';
 import { PaginationResult } from './pagination.interface';
-import { BasicSearchOptions } from './search.interface';
+import { BasicSearchOptions, AdvancedSearchOptions } from './search.interface';
+import { RelationValidator } from './relation-validator';
 import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType, ApiExcludeDisabledEndpoint } from '../decorators/endpoint.decorator';
 
 /**
@@ -76,12 +77,12 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
   }
 
   /**
-   * Parse query parameters into search options
+   * Parse query parameters into advanced search options with relation support
    * @param query Raw query parameters
-   * @returns Parsed search options
+   * @returns Parsed advanced search options
    */
-  protected parseSearchOptions(query: any): BasicSearchOptions {
-    const options: BasicSearchOptions = {};
+  protected parseSearchOptions(query: any): AdvancedSearchOptions {
+    const options: AdvancedSearchOptions = {};
 
     // Handle search term
     if (query.search && typeof query.search === 'string') {
@@ -102,8 +103,13 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
       options.orderBy = { [query.sortBy]: sortOrder };
     }
 
-    // Handle additional filters (exclude known pagination and search params)
-    const excludeParams = ['page', 'limit', 'search', 'searchFields', 'sortBy', 'sortOrder'];
+    // Handle relation includes (comma-separated string)
+    if (query.include && typeof query.include === 'string') {
+      options.requestedIncludes = RelationValidator.parseIncludeString(query.include);
+    }
+
+    // Handle additional filters (exclude known pagination, search, and relation params)
+    const excludeParams = ['page', 'limit', 'search', 'searchFields', 'sortBy', 'sortOrder', 'include'];
     const filters: Record<string, any> = {};
 
     Object.entries(query).forEach(([key, value]) => {
@@ -120,8 +126,18 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
   }
 
   /**
-   * Get all records with enhanced pagination metadata and search capabilities
-   * Supports search, filtering, and sorting through query parameters
+   * Get all records with enhanced pagination metadata, search capabilities, and relation loading
+   * Supports search, filtering, sorting, and relation includes through query parameters
+   *
+   * Query parameters:
+   * - page: Page number (default: 1)
+   * - limit: Records per page (default: service default)
+   * - search: Search term
+   * - searchFields: Comma-separated list of fields to search
+   * - sortBy: Field to sort by
+   * - sortOrder: Sort direction (asc|desc)
+   * - include: Comma-separated list of relations to include
+   * - [key]: Additional filter fields
    */
   @Get()
   findAll(@Query('page') page?: string, @Query('limit') limit?: string, @Query() query?: any): Promise<PaginationResult<T>> {
@@ -131,17 +147,39 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
 
     const searchOptions = this.parseSearchOptions(query || {});
 
+    // Use advanced search if we have relation includes or advanced features
+    if (searchOptions.requestedIncludes && searchOptions.requestedIncludes.length > 0) {
+      return this.service.findAllAdvanced(page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : undefined, searchOptions);
+    }
+
+    // Fall back to basic search for backward compatibility
     return this.service.findAll(page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : undefined, searchOptions);
   }
 
   /**
-   * Get a single record by ID
+   * Get a single record by ID with optional relation includes
    */
   @Get(':id')
-  findOne(@Param('id') id: string): Promise<T> {
+  findOne(@Param('id') id: string, @Query() query?: any): Promise<T> {
     if (!this.isEndpointEnabled(EndpointType.FIND_ONE)) {
       throw new NotFoundException('Endpoint not available');
     }
+
+    // If include parameter is provided, use advanced search for single record
+    if (query?.include && typeof query.include === 'string') {
+      const searchOptions: AdvancedSearchOptions = {
+        requestedIncludes: RelationValidator.parseIncludeString(query.include),
+        filters: { id },
+      };
+
+      return this.service.findAllAdvanced(1, 1, searchOptions).then((result) => {
+        if (result.data.length === 0) {
+          throw new NotFoundException(`${this.service['modelName']} with ID "${id}" not found`);
+        }
+        return result.data[0];
+      });
+    }
+
     return this.service.findOne(id);
   }
 

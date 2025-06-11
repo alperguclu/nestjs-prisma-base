@@ -28,6 +28,34 @@ export interface AdvancedFilter {
 }
 
 /**
+ * Relation loading configuration for services
+ */
+export interface RelationConfig {
+  /** Default relations to include in all queries */
+  defaultIncludes?: Record<string, boolean | any>;
+  /** Available relations that can be requested dynamically */
+  availableIncludes?: string[];
+  /** Maximum nesting depth for relations to prevent performance issues */
+  maxDepth?: number;
+  /** Whether to allow nested relation loading (default: true) */
+  allowNested?: boolean;
+  /** Custom relation configurations for specific includes */
+  customIncludes?: Record<string, any>;
+}
+
+/**
+ * Relation validation result
+ */
+export interface RelationValidationResult {
+  /** Validated include object ready for Prisma */
+  validatedIncludes: Record<string, boolean | any>;
+  /** Invalid relation keys that were rejected */
+  invalidKeys: string[];
+  /** Whether the maximum depth was exceeded */
+  depthExceeded: boolean;
+}
+
+/**
  * Advanced search options extending basic search with complex query capabilities
  */
 export interface AdvancedSearchOptions extends BasicSearchOptions {
@@ -41,6 +69,8 @@ export interface AdvancedSearchOptions extends BasicSearchOptions {
   include?: Record<string, boolean | any>;
   /** Select specific fields only */
   select?: Record<string, boolean>;
+  /** Requested relations to include (will be validated against RelationConfig) */
+  requestedIncludes?: string[];
 }
 
 /**
@@ -77,6 +107,8 @@ export interface SearchQuery {
   sortBy?: string;
   /** Sort direction */
   sortOrder?: 'asc' | 'desc';
+  /** Comma-separated list of relations to include */
+  include?: string;
   /** Additional filters as query parameters */
   [key: string]: any;
 }

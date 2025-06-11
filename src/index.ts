@@ -5,10 +5,11 @@ export { BaseCreateDto, BaseUpdateDto, BaseResponseDto } from './base/base.dto';
 
 // Interfaces
 export { PaginationResult, PaginationMeta, PaginationConfig } from './base/pagination.interface';
-export { BasicSearchOptions, AdvancedSearchOptions, AdvancedFilter, AdvancedFilterOperator, SearchConfig, SearchQuery, QueryBuilderResult } from './base/search.interface';
+export { BasicSearchOptions, AdvancedSearchOptions, AdvancedFilter, AdvancedFilterOperator, SearchConfig, SearchQuery, QueryBuilderResult, RelationConfig, RelationValidationResult } from './base/search.interface';
 
 // Utilities
 export { AdvancedQueryBuilder } from './base/query-builder';
+export { RelationValidator } from './base/relation-validator';
 
 // Prisma module and service
 export { PrismaModule, PrismaModuleOptions } from './prisma/prisma.module';

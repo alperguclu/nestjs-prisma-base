@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationResult, PaginationMeta, PaginationConfig } from './pagination.interface';
-import { BasicSearchOptions, AdvancedSearchOptions, SearchConfig } from './search.interface';
+import { BasicSearchOptions, AdvancedSearchOptions, SearchConfig, RelationConfig } from './search.interface';
 import { AdvancedQueryBuilder } from './query-builder';
+import { RelationValidator } from './relation-validator';
 
 /**
  * Base service class that provides common CRUD operations for any Prisma model
@@ -26,6 +27,12 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
     caseSensitive: false,
     searchMode: 'contains',
     maxSearchFields: 10,
+  };
+
+  // Relation configuration - can be overridden in child classes for relation loading
+  protected relationConfig: RelationConfig = {
+    maxDepth: 3,
+    allowNested: true,
   };
 
   constructor(protected readonly prisma: PrismaService) {}
@@ -358,6 +365,56 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
   }
 
   /**
+   * Validate and process relation includes
+   * @param options Advanced search options that may include relations
+   * @returns Validated include object
+   */
+  protected processRelations(options: AdvancedSearchOptions): Record<string, boolean | any> {
+    let requestedIncludes: string[] | Record<string, boolean | any> | undefined;
+
+    // Handle different ways relations can be specified
+    if (options.requestedIncludes) {
+      requestedIncludes = options.requestedIncludes;
+    } else if (options.include) {
+      requestedIncludes = options.include;
+    }
+
+    // Validate includes using RelationValidator
+    const validationResult = RelationValidator.validateIncludes(requestedIncludes, this.relationConfig);
+
+    // Log warnings for invalid includes (could be enhanced with proper logging)
+    if (validationResult.invalidKeys.length > 0) {
+      console.warn(`Invalid relation keys ignored: ${validationResult.invalidKeys.join(', ')}`);
+    }
+
+    if (validationResult.depthExceeded) {
+      console.warn(`Maximum relation depth (${this.relationConfig.maxDepth}) exceeded. Relations were truncated.`);
+    }
+
+    return validationResult.validatedIncludes;
+  }
+
+  /**
+   * Build complete query options including relations
+   * @param options Advanced search options
+   * @returns Complete query builder result with validated relations
+   */
+  protected buildAdvancedQueryOptions(options: AdvancedSearchOptions): any {
+    // Start with basic query building
+    const queryResult = AdvancedQueryBuilder.buildQuery(options, this.searchConfig);
+
+    // Process and validate relations
+    const validatedIncludes = this.processRelations(options);
+
+    // Merge validated includes with any existing includes from query builder
+    if (Object.keys(validatedIncludes).length > 0) {
+      queryResult.include = RelationValidator.mergeIncludes(queryResult.include, validatedIncludes);
+    }
+
+    return queryResult;
+  }
+
+  /**
    * Find all records with advanced search capabilities
    * Supports complex filtering, raw where conditions, relations, and field selection
    * @param page Page number (default: 1)
@@ -378,8 +435,8 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
     const queryLimit = isUnlimited ? undefined : validatedLimit;
     const skip = isUnlimited ? 0 : (validatedPage - 1) * validatedLimit;
 
-    // Build advanced query using query builder
-    const queryResult = options ? AdvancedQueryBuilder.buildQuery(options, this.searchConfig) : {};
+    // Build advanced query with relation validation
+    const queryResult = options ? this.buildAdvancedQueryOptions(options) : {};
 
     // Build query options
     const queryOptions: any = {
@@ -392,7 +449,7 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
       queryOptions.where = queryResult.where;
     }
 
-    // Apply include conditions
+    // Apply include conditions (with validation)
     if (queryResult.include) {
       queryOptions.include = queryResult.include;
     }

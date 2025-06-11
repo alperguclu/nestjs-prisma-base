@@ -5,7 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.0] - 2024-12-19
+## [0.8.0]
+
+### Added
+
+- **Relation Loading Configuration**: Comprehensive system for managing and validating relation includes
+- `RelationConfig` interface for configuring relation loading behavior
+- `RelationValidator` utility class for validating and processing relation includes
+- `RelationValidationResult` interface for detailed validation feedback
+- Protected `relationConfig` property in BaseService for customizable relation configuration
+- Enhanced `AdvancedSearchOptions` with `requestedIncludes` field for relation specification
+- Extended `SearchQuery` interface with `include` parameter for REST API relation loading
+- Automatic relation validation with depth limiting for performance protection
+- Support for default relations, available relations whitelist, and custom relation configurations
+- Intelligent relation merging for combining default and requested includes
+
+### Enhanced
+
+- **BaseController**: Added support for relation includes via query parameters
+- Enhanced `findAll()` endpoint to accept `include` query parameter for relation loading
+- Enhanced `findOne()` endpoint to support relation includes for single record retrieval
+- Updated `parseSearchOptions()` to handle comma-separated relation includes
+- Automatic fallback between advanced and basic search based on requested features
+- Improved query parameter parsing with relation support
+- Enhanced API documentation with relation loading examples
+
+### Security & Performance
+
+- **Depth Protection**: Configurable maximum relation depth to prevent performance issues
+- **Whitelist Validation**: Optional `availableIncludes` configuration for security
+- **Invalid Include Handling**: Graceful handling of invalid relation requests with warnings
+- **Nested Relation Support**: Intelligent handling of nested relation configurations
+
+### API Enhancements
+
+- **REST API**: Seamless relation loading via `?include=posts,profile,comments` query parameters
+- **Type Safety**: Full TypeScript support for relation validation and configuration
+- **Backward Compatibility**: All existing functionality remains unchanged
+- **Flexible Configuration**: Per-service relation configuration override capability
+
+### Technical Features
+
+- **Non-breaking changes**: All existing methods and interfaces remain unchanged
+- **Performance optimized**: Efficient relation processing with validation caching
+- **Configurable**: Flexible depth limits, whitelists, and custom configurations
+- **Developer-friendly**: Clear validation messages and automatic include parsing
+
+### Documentation
+
+- Added comprehensive JSDoc documentation for all relation-related interfaces and classes
+- Included examples for relation configuration and query parameter usage
+- Updated exports to include all new relation loading functionality
+
+## [0.7.0]
 
 ### Added
 

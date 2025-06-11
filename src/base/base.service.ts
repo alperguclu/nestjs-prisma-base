@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationResult, PaginationMeta, PaginationConfig } from './pagination.interface';
-import { BasicSearchOptions, SearchConfig } from './search.interface';
+import { BasicSearchOptions, AdvancedSearchOptions, SearchConfig } from './search.interface';
+import { AdvancedQueryBuilder } from './query-builder';
 
 /**
  * Base service class that provides common CRUD operations for any Prisma model
@@ -354,5 +355,97 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
       }
       throw error;
     }
+  }
+
+  /**
+   * Find all records with advanced search capabilities
+   * Supports complex filtering, raw where conditions, relations, and field selection
+   * @param page Page number (default: 1)
+   * @param limit Number of records per page (default: configured defaultLimit)
+   * @param options Advanced search and filter options
+   * @returns Paginated result with metadata
+   */
+  async findAllAdvanced(page = 1, limit?: number, options?: AdvancedSearchOptions): Promise<PaginationResult<T>> {
+    // Use default limit if not provided
+    const requestedLimit = limit ?? this.paginationConfig.defaultLimit;
+
+    // Validate pagination parameters
+    const validatedPage = this.validatePage(page);
+    const validatedLimit = this.validateLimit(requestedLimit);
+
+    // Handle unlimited case
+    const isUnlimited = validatedLimit === Number.MAX_SAFE_INTEGER;
+    const queryLimit = isUnlimited ? undefined : validatedLimit;
+    const skip = isUnlimited ? 0 : (validatedPage - 1) * validatedLimit;
+
+    // Build advanced query using query builder
+    const queryResult = options ? AdvancedQueryBuilder.buildQuery(options, this.searchConfig) : {};
+
+    // Build query options
+    const queryOptions: any = {
+      skip: isUnlimited ? undefined : skip,
+      take: queryLimit,
+    };
+
+    // Apply where conditions
+    if (queryResult.where) {
+      queryOptions.where = queryResult.where;
+    }
+
+    // Apply include conditions
+    if (queryResult.include) {
+      queryOptions.include = queryResult.include;
+    }
+
+    // Apply select conditions
+    if (queryResult.select) {
+      queryOptions.select = queryResult.select;
+    }
+
+    // Apply orderBy conditions
+    if (queryResult.orderBy) {
+      queryOptions.orderBy = queryResult.orderBy;
+    }
+
+    // Get total count and data in parallel for better performance
+    const [data, total] = await Promise.all([
+      this.prisma[this.modelName].findMany(queryOptions) as Promise<T[]>,
+      this.prisma[this.modelName].count({
+        where: queryResult.where,
+      }) as Promise<number>,
+    ]);
+
+    // Calculate pagination metadata
+    const actualLimit = isUnlimited ? total : validatedLimit;
+    const totalPages = isUnlimited ? 1 : Math.ceil(total / validatedLimit);
+    const hasNext = isUnlimited ? false : validatedPage < totalPages;
+    const hasPrev = validatedPage > 1;
+
+    const meta: PaginationMeta = {
+      total,
+      page: validatedPage,
+      limit: actualLimit,
+      totalPages,
+      hasNext,
+      hasPrev,
+    };
+
+    return {
+      data,
+      meta,
+    };
+  }
+
+  /**
+   * Find all records with advanced search capabilities - simple array return
+   * @deprecated Use findAllAdvanced() instead for enhanced pagination and search
+   * @param page Page number (default: 1)
+   * @param limit Number of records per page (default: configured defaultLimit)
+   * @param options Advanced search and filter options
+   * @returns Array of records
+   */
+  async findAllAdvancedSimple(page = 1, limit?: number, options?: AdvancedSearchOptions): Promise<T[]> {
+    const result = await this.findAllAdvanced(page, limit, options);
+    return result.data;
   }
 }

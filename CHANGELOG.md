@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2024-12-19
+
+### Added
+
+- **Advanced Search Capabilities**: Comprehensive advanced query system for complex filtering
+- `AdvancedSearchOptions` interface extending basic search with advanced operators
+- `AdvancedQueryBuilder` utility class for building complex Prisma queries
+- `AdvancedFilter` interface with 12 operator types (`equals`, `not`, `contains`, `startsWith`, `endsWith`, `gt`, `gte`, `lt`, `lte`, `in`, `notIn`, `isNull`, `isNotNull`)
+- `findAllAdvanced()` method in BaseService for advanced search capabilities
+- `findAllAdvancedSimple()` method for backward compatibility
+- Support for raw Prisma where conditions in advanced search
+- Logical operator support (`AND` | `OR`) for combining conditions
+- Include/select field support for relation loading and field selection
+- Advanced filter validation with configurable field restrictions
+- Type-safe query building with comprehensive validation
+
+### Enhanced
+
+- Extended `SearchConfig` interface with advanced filtering configuration
+- Added `allowedAdvancedFields` and `maxAdvancedFilters` configuration options
+- Enhanced query builder with operator-based filtering and validation
+- Improved error handling for invalid operator-value combinations
+
+### Technical Features
+
+- **Non-breaking changes**: All existing methods remain unchanged
+- **Performance optimized**: Parallel queries for data and count operations
+- **Type-safe**: Full TypeScript support with strict type checking
+- **Configurable**: Flexible configuration for security and performance
+- **Validated**: Comprehensive input validation and error handling
+
+### Documentation
+
+- Added comprehensive JSDoc documentation for all new interfaces and methods
+- Included examples for advanced filter operators and configurations
+- Updated exports to include all new advanced search functionality
+
 ## [0.6.1]
 
 ### Fixed

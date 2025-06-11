@@ -1,18 +1,23 @@
-// Prisma module exports
-export * from './prisma/prisma.module';
-export * from './prisma/prisma.service';
+// Base classes
+export { BaseController } from './base/base.controller';
+export { BaseService } from './base/base.service';
+export { BaseCreateDto, BaseUpdateDto, BaseResponseDto } from './base/base.dto';
 
-// Base classes exports
-export * from './base/base.controller';
-export * from './base/base.service';
-export * from './base/base.dto';
-export * from './base/pagination.interface';
-export * from './base/search.interface';
+// Interfaces
+export { PaginationResult, PaginationMeta, PaginationConfig } from './base/pagination.interface';
+export { BasicSearchOptions, AdvancedSearchOptions, AdvancedFilter, AdvancedFilterOperator, SearchConfig, SearchQuery, QueryBuilderResult } from './base/search.interface';
 
-// Decorators exports
-export * from './decorators/model-name.decorator';
-export * from './decorators/endpoint.decorator';
+// Utilities
+export { AdvancedQueryBuilder } from './base/query-builder';
 
-// Factories exports
-export * from './common/dto-factory';
-export * from './common/module-factory';
+// Prisma module and service
+export { PrismaModule, PrismaModuleOptions } from './prisma/prisma.module';
+export { PrismaService } from './prisma/prisma.service';
+
+// Decorators
+export { EnableEndpoint, DisableEndpoint, EnableAllEndpoints, EndpointType } from './decorators/endpoint.decorator';
+export { ModelName } from './decorators/model-name.decorator';
+
+// Factories
+export { createModelModule, ModelModuleOptions } from './common/module-factory';
+export { createDtos } from './common/dto-factory';

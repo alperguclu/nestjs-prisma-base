@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaginationResult, PaginationMeta } from './pagination.interface';
 
 /**
  * Base service class that provides common CRUD operations for any Prisma model
@@ -13,9 +14,51 @@ export abstract class BaseService<T, CreateDto, UpdateDto> {
   constructor(protected readonly prisma: PrismaService) {}
 
   /**
-   * Find all records with optional pagination
+   * Find all records with enhanced pagination metadata
+   * @param page Page number (default: 1)
+   * @param limit Number of records per page (default: 10)
+   * @returns Paginated result with metadata
    */
-  async findAll(page = 1, limit = 10): Promise<T[]> {
+  async findAll(page = 1, limit = 10): Promise<PaginationResult<T>> {
+    const skip = (page - 1) * limit;
+
+    // Get total count and data in parallel for better performance
+    const [data, total] = await Promise.all([
+      this.prisma[this.modelName].findMany({
+        skip,
+        take: limit,
+      }) as Promise<T[]>,
+      this.prisma[this.modelName].count() as Promise<number>,
+    ]);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / limit);
+    const hasNext = page < totalPages;
+    const hasPrev = page > 1;
+
+    const meta: PaginationMeta = {
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNext,
+      hasPrev,
+    };
+
+    return {
+      data,
+      meta,
+    };
+  }
+
+  /**
+   * Find all records with simple array return (backward compatibility)
+   * @deprecated Use findAll() instead for enhanced pagination
+   * @param page Page number (default: 1)
+   * @param limit Number of records per page (default: 10)
+   * @returns Array of records
+   */
+  async findAllSimple(page = 1, limit = 10): Promise<T[]> {
     const skip = (page - 1) * limit;
 
     return this.prisma[this.modelName].findMany({

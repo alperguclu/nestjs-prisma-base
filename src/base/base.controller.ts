@@ -1,6 +1,7 @@
 import { Body, Delete, Get, NotFoundException, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiExcludeEndpoint } from '@nestjs/swagger';
 import { BaseService } from './base.service';
+import { PaginationResult } from './pagination.interface';
 import { DISABLED_ENDPOINTS_KEY, ENABLED_ENDPOINTS_KEY, ENDPOINT_DISABLED_KEY, ENDPOINT_ENABLED_KEY, EndpointType, ApiExcludeDisabledEndpoint } from '../decorators/endpoint.decorator';
 
 /**
@@ -74,10 +75,11 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
   }
 
   /**
-   * Get all records with pagination
+   * Get all records with enhanced pagination metadata
+   * Returns data with pagination information including total count, pages, etc.
    */
   @Get()
-  findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+  findAll(@Query('page') page?: string, @Query('limit') limit?: string): Promise<PaginationResult<T>> {
     if (!this.isEndpointEnabled(EndpointType.FIND_ALL)) {
       throw new NotFoundException('Endpoint not available');
     }
@@ -88,7 +90,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Get a single record by ID
    */
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<T> {
     if (!this.isEndpointEnabled(EndpointType.FIND_ONE)) {
       throw new NotFoundException('Endpoint not available');
     }
@@ -99,7 +101,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Create a new record
    */
   @Post()
-  create(@Body() createDto: CreateDto) {
+  create(@Body() createDto: CreateDto): Promise<T> {
     if (!this.isEndpointEnabled(EndpointType.CREATE)) {
       throw new NotFoundException('Endpoint not available');
     }
@@ -110,7 +112,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Update a record
    */
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDto: UpdateDto) {
+  update(@Param('id') id: string, @Body() updateDto: UpdateDto): Promise<T> {
     if (!this.isEndpointEnabled(EndpointType.UPDATE)) {
       throw new NotFoundException('Endpoint not available');
     }
@@ -121,7 +123,7 @@ export abstract class BaseController<T, CreateDto, UpdateDto> {
    * Delete a record
    */
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string): Promise<T> {
     if (!this.isEndpointEnabled(EndpointType.REMOVE)) {
       throw new NotFoundException('Endpoint not available');
     }

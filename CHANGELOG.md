@@ -1,5 +1,58 @@
 # Changelog
 
+## [0.4.4] - 2025-05-19
+
+### Fixed
+
+- Fixed property forwarding issue where Prisma models were not accessible through PrismaService
+- Implemented JavaScript Proxy to properly forward all properties and method calls to underlying PrismaClient
+- Added TypeScript index signature for better compatibility with BaseService
+
+## [0.4.2] - 2025-05-19
+
+### Changed
+
+- **BREAKING**: Removed default PrismaClient creation fallback completely
+- PrismaClient instance is now always required when using PrismaModule.forRoot()
+- Updated PrismaModuleOptions interface to make prismaClient required
+- Added validation to ensure PrismaClient is provided in both forRoot() and forFeature() methods
+
+### Fixed
+
+- Completely eliminated dependency on default @prisma/client import
+- Updated examples in codebase to reflect required PrismaClient provision
+
+## [0.4.1] - 2025-05-19
+
+### Fixed
+
+- Fixed dependency injection issues for PrismaService constructor
+- Added @Optional() decorator to customClient parameter
+- Improved factory method to handle cases with and without custom clients
+- Resolved "UnknownDependenciesException" errors when using multiple clients
+
+## [0.4.0] - 2025-05-19
+
+### Added
+
+- **MAJOR**: Support for multiple Prisma clients in the same application
+- New PrismaModuleOptions interface with enhanced configuration options
+- New forFeature() method for simplified multi-database setup
+- Support for custom provider tokens to avoid conflicts between multiple clients
+- Enhanced PrismaService to work with custom client instances
+
+### Changed
+
+- **BREAKING**: PrismaModule.forRoot() now accepts configuration options
+- Enhanced PrismaService constructor to accept custom PrismaClient instances
+- Updated documentation with comprehensive multi-database examples
+- Added examples for both forRoot() and forFeature() approaches
+
+### Fixed
+
+- Improved lifecycle management for custom PrismaClient instances
+- Better error handling for missing client configurations
+
 ## [0.3.1]
 
 ### Fixed

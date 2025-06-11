@@ -7,6 +7,7 @@ import { Controller, Get, Injectable, Module } from '@nestjs/common';
 import { BaseController } from '../base/base.controller';
 import { BaseService } from '../base/base.service';
 import { BaseCreateDto, BaseUpdateDto, BaseResponseDto } from '../base/base.dto';
+import { PaginationResult } from '../base/pagination.interface';
 import { ModelName } from '../decorators/model-name.decorator';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PrismaService } from '../prisma/prisma.service';
@@ -48,6 +49,25 @@ export class UserController extends BaseController<User, CreateUserDto, UpdateUs
     // Example implementation
     return [];
   }
+
+  // Example of using the new pagination response
+  @Get('paginated')
+  @EnableEndpoint('paginated')
+  async findAllPaginated(): Promise<PaginationResult<User>> {
+    // This will return the new enhanced pagination response:
+    // {
+    //   data: User[],
+    //   meta: {
+    //     total: 100,
+    //     page: 1,
+    //     limit: 10,
+    //     totalPages: 10,
+    //     hasNext: true,
+    //     hasPrev: false
+    //   }
+    // }
+    return this.service.findAll(1, 10);
+  }
 }
 
 // Example 2: Custom service implementation
@@ -62,6 +82,12 @@ export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto>
   // Custom method example
   async findAdmins(): Promise<User[]> {
     return [];
+  }
+
+  // Example of backward compatibility method
+  async findAllAsArray(): Promise<User[]> {
+    // Use the deprecated method for backward compatibility
+    return this.findAllSimple(1, 10);
   }
 }
 

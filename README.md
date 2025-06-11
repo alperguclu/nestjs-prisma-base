@@ -13,6 +13,7 @@ npm install nestjs-prisma-base
 - Prisma module with proper lifecycle management
 - Base service with common CRUD operations
 - Base controller with configurable REST endpoints
+- **Enhanced pagination with metadata** - NEW in v0.5.0
 - Base DTOs for standardizing request/response data
 - Support for multiple Prisma clients/databases
 - Factory functions to auto-generate components
@@ -109,6 +110,64 @@ export class UserController extends BaseController<User, CreateUserDto, UpdateUs
   constructor(private readonly userService: UserService) {
     super(userService);
   }
+}
+```
+
+## Enhanced Pagination (v0.5.0+)
+
+The `findAll` method now returns enhanced pagination metadata:
+
+```typescript
+// GET /users?page=1&limit=10
+{
+  "data": [
+    { "id": 1, "name": "John", "email": "john@example.com" },
+    { "id": 2, "name": "Jane", "email": "jane@example.com" }
+  ],
+  "meta": {
+    "total": 150,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 15,
+    "hasNext": true,
+    "hasPrev": false
+  }
+}
+```
+
+### Backward Compatibility
+
+For projects that need the old array response, use `findAllSimple()`:
+
+```typescript
+// In your custom service
+export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
+  // Returns User[] instead of PaginationResult<User>
+  async getUsersAsArray(): Promise<User[]> {
+    return this.findAllSimple(1, 10);
+  }
+}
+```
+
+### Pagination Types
+
+```typescript
+import { PaginationResult, PaginationMeta } from 'nestjs-prisma-base';
+
+// Enhanced pagination response
+interface PaginationResult<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
+// Pagination metadata
+interface PaginationMeta {
+  total: number; // Total number of records
+  page: number; // Current page number
+  limit: number; // Records per page
+  totalPages: number; // Total number of pages
+  hasNext: boolean; // Whether there's a next page
+  hasPrev: boolean; // Whether there's a previous page
 }
 ```
 

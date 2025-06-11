@@ -12,6 +12,9 @@ export { MinimalBaseCreateDto, MinimalBaseUpdateDto, MinimalBaseResponseDto, Min
 // v0.9.0: Swagger-Enhanced DTOs
 export { SwaggerBaseCreateDto, SwaggerBaseUpdateDto, SwaggerBaseResponseDto, configureSwaggerDTOs, getSwaggerDTOConfig, applySwaggerDecoratorsToClass, isSwaggerIntegrationEnabled } from './common/swagger-dtos';
 
+// v1.0.0: Modular DTO Composition (Mixins)
+export { WithTimestamps, WithSoftDelete, WithAuditFields, WithVersioning, WithId, composeMixins, MixinCombinations, DisableSwagger, DisableValidation, hasSwaggerDisabled, hasValidationDisabled, MixinConfig, MixinType, ComposedMixin } from './common/dto-mixins';
+
 // v0.9.0: DTO Configuration Interfaces
 export { DTOConfig, SwaggerDTOConfig, PrismaModuleDTOOptions } from './common/dto-config.interface';
 

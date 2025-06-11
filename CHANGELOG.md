@@ -2,142 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [1.0.0] - Modular DTO Composition (Mixins)
+
+### Added
+
+- **Modular DTO Composition**: Advanced mixin system for building DTOs with composable features
+- `WithTimestamps(Base, config?)` mixin for adding createdAt and updatedAt fields
+- `WithSoftDelete(Base, config?)` mixin for adding deletedAt and isActive fields for soft deletion
+- `WithAuditFields(Base, config?)` mixin for adding createdBy and updatedBy fields for audit trails
+- `WithVersioning(Base, config?)` mixin for adding version field for optimistic locking
+- `WithId(Base, config?)` mixin for adding id field for entity identification
+- `composeMixins(Base, ...mixins)` utility function for composing multiple mixins
+- `MixinConfig` interface for configuring mixin behavior (Swagger/Validation)
+- `MixinCombinations.WithFullAuditTrail()` convenience combination for timestamps + audit fields + versioning
+- `MixinCombinations.WithSoftDeleteAndTimestamps()` convenience combination for soft delete + timestamps
+- `MixinCombinations.WithStandardEntity()` convenience combination for ID + timestamps
+- `MixinCombinations.WithCompleteEntity()` convenience combination for all available fields
+- `DisableSwagger()` and `DisableValidation()` wrapper functions for decorator control
+- `hasSwaggerDisabled()` and `hasValidationDisabled()` type guard functions
+- `MixinType<T>` and `ComposedMixin<T>` utility types for type-safe composition
+- `Constructor<T>` generic constructor type for mixin composition
+- Optional class-validator integration with graceful fallback when not installed
+- Per-mixin configuration for enabling/disabling Swagger and validation decorators
+- `class-validator` added as peer dependency for validation support
 
 ## [0.9.0] - DTO Configuration & Swagger Integration
 
-### ✨ New Features
+### Added
 
-**Phase 6 & 7: Optional Swagger Integration for DTOs + Configurable Base DTOs**
-
-#### 🎯 Configurable Base DTOs
-
-- **NEW**: `ConfigurableBaseCreateDto`, `ConfigurableBaseUpdateDto`, `ConfigurableBaseResponseDto` classes
-- **NEW**: Global DTO configuration via `configureDTOs()` function
-- **NEW**: Per-class DTO configuration via static `configure()` methods
-- **NEW**: `DTOConfig` interface for flexible DTO behavior control
-- **NEW**: Support for custom timestamp field names
-- **NEW**: Optional ID and timestamp field inclusion controls
-
-#### 🔧 Minimal DTOs
-
-- **NEW**: `MinimalBaseCreateDto`, `MinimalBaseUpdateDto`, `MinimalBaseResponseDto` - completely empty base classes
-- **NEW**: `MinimalBaseIdDto` - contains only ID field
-- **NEW**: `MinimalBaseTimestampDto` - contains only timestamp fields
-- **NEW**: `MinimalBaseEntityDto` - contains ID and timestamp fields
-- **NEW**: Perfect for developers who want full control over their DTOs
-
-#### 📖 Optional Swagger Integration
-
-- **NEW**: `SwaggerBaseCreateDto`, `SwaggerBaseUpdateDto`, `SwaggerBaseResponseDto` classes
-- **NEW**: Automatic `@ApiProperty` decorator application when Swagger is enabled
-- **NEW**: `SwaggerDTOConfig` interface for Swagger-specific configuration
-- **NEW**: `configureSwaggerDTOs()` function for global Swagger DTO configuration
-- **NEW**: `applySwaggerDecoratorsToClass()` utility for manual decorator application
-- **NEW**: `isSwaggerIntegrationEnabled()` utility function
-- **NEW**: Graceful fallback when `@nestjs/swagger` is not installed
-- **NEW**: Configurable field descriptions and examples
-- **NEW**: Optional timestamp inclusion in Swagger documentation
-
-#### 🏗️ Enhanced PrismaModule
-
-- **NEW**: `PrismaModuleDTOOptions` interface for module-level DTO configuration
-- **NEW**: `dtoOptions` parameter in `PrismaModule.forRoot()` and `PrismaModule.forFeature()`
-- **NEW**: `PrismaModule.configureDTOs()` static method for manual configuration
-- **NEW**: Automatic DTO configuration during module initialization
-- **NEW**: Development mode logging for DTO configuration debugging
-
-#### 🔧 Configuration Features
-
-- **NEW**: Global and per-class configuration system
-- **NEW**: Configuration inheritance (global → class-specific)
-- **NEW**: Runtime configuration checking utilities
-- **NEW**: TypeScript-first configuration interfaces
-- **NEW**: Flexible field inclusion/exclusion options
-
-### 📈 Developer Experience Improvements
-
-- **Enhanced**: Multiple DTO approaches for different development styles
-- **Enhanced**: Optional Swagger integration without forced dependencies
-- **Enhanced**: Minimal setup required for basic usage
-- **Enhanced**: Maximum flexibility for advanced customization
-- **Enhanced**: Clear separation between configuration concerns
-
-### 🛠️ Technical Details
-
-- **Architecture**: Non-breaking changes - all new features are optional
-- **Compatibility**: Full backward compatibility with existing DTO classes
-- **Dependencies**: Optional `@nestjs/swagger` integration
-- **TypeScript**: Full type safety for all configuration options
-- **Performance**: Lazy loading of Swagger decorators
-- **Memory**: Efficient configuration sharing between classes
-
-### 📚 Usage Examples
-
-#### Basic Configurable DTOs
-
-```typescript
-// Global configuration
-configureDTOs({
-  includeTimestamps: true,
-  includeId: true,
-  timestampFields: { createdAt: 'created_at', updatedAt: 'updated_at' },
-});
-
-// Per-class configuration
-class UserCreateDto extends ConfigurableBaseCreateDto {
-  name: string;
-  email: string;
-}
-
-UserCreateDto.configure({ includeTimestamps: false });
-```
-
-#### Swagger Integration
-
-```typescript
-// Enable Swagger globally
-configureSwaggerDTOs({
-  enabled: true,
-  includeExamples: true,
-  includeDescriptions: true,
-});
-
-class UserResponseDto extends SwaggerBaseResponseDto {
-  @ApiProperty({ description: 'User name', example: 'John Doe' })
-  name: string;
-}
-```
-
-#### PrismaModule Configuration
-
-```typescript
-PrismaModule.forRoot({
-  prismaClient: new PrismaClient(),
-  dtoOptions: {
-    dtoConfig: {
-      includeTimestamps: true,
-      includeId: true,
-    },
-    swaggerIntegration: {
-      enabled: true,
-      includeExamples: true,
-    },
-  },
-});
-```
-
-### 🔄 Migration Guide
-
-**No breaking changes** - existing code continues to work unchanged.
-
-**To adopt new features:**
-
-1. Replace `BaseCreateDto` with `ConfigurableBaseCreateDto` for configuration support
-2. Replace `BaseResponseDto` with `SwaggerBaseResponseDto` for Swagger integration
-3. Use `MinimalBase*Dto` classes for maximum control
-4. Configure DTOs via `PrismaModule.forRoot()` or individual configuration functions
+- **Configurable Base DTOs**: Flexible DTO classes with runtime configuration
+- `ConfigurableBaseCreateDto`, `ConfigurableBaseUpdateDto`, `ConfigurableBaseResponseDto` classes
+- `configureDTOs()` function for global DTO configuration
+- `DTOConfig` interface for controlling DTO behavior (timestamps, ID inclusion, field names)
+- **Minimal DTOs**: Completely empty base classes for maximum control
+- `MinimalBaseCreateDto`, `MinimalBaseUpdateDto`, `MinimalBaseResponseDto` classes
+- `MinimalBaseIdDto` class containing only ID field
+- `MinimalBaseTimestampDto` class containing only timestamp fields
+- `MinimalBaseEntityDto` class containing ID and timestamp fields
+- **Optional Swagger Integration**: Automatic API documentation when enabled
+- `SwaggerBaseCreateDto`, `SwaggerBaseUpdateDto`, `SwaggerBaseResponseDto` classes
+- `SwaggerDTOConfig` interface for Swagger-specific configuration
+- `configureSwaggerDTOs()` function for global Swagger DTO configuration
+- `applySwaggerDecoratorsToClass()` utility function for manual decorator application
+- `isSwaggerIntegrationEnabled()` utility function for checking Swagger status
+- **Enhanced PrismaModule**: Module-level DTO configuration support
+- `PrismaModuleDTOOptions` interface for module-level DTO configuration
+- `dtoOptions` parameter in `PrismaModule.forRoot()` and `PrismaModule.forFeature()` methods
+- `PrismaModule.configureDTOs()` static method for manual configuration
+- Support for custom timestamp field names (e.g., created_at vs createdAt)
+- Optional ID and timestamp field inclusion controls per DTO class
+- Automatic `@ApiProperty` decorator application when Swagger is enabled
+- Global and per-class configuration system with inheritance
+- Configuration state checking utilities for runtime validation
+- Development mode logging for DTO configuration debugging
+- Graceful fallback when `@nestjs/swagger` is not installed
 
 ## [0.8.0]
 

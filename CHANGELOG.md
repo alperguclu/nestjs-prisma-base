@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.6.1] - 2024-12-19
+## [0.6.1]
 
 ### Fixed
 
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved module factory architecture for better NestJS integration
 - Resolved controller registration issues that prevented factory modules from working
 
-## [0.6.0] - 2024-12-19
+## [0.6.0]
 
 ### Added
 
@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated examples with various search configuration patterns
 - Documented query parameter usage and programmatic search methods
 
-## [0.5.1] - 2024-12-19
+## [0.5.1]
 
 ### Added
 
@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated examples with pagination configuration patterns
 - Added validation examples and error scenarios
 
-## [0.5.0] - 2024-12-19
+## [0.5.0]
 
 ### Added
 
@@ -111,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added migration guide for v0.5.0
 - Enhanced examples with new pagination response format
 
-## [0.4.4] - 2025-05-19
+## [0.4.4]
 
 ### Fixed
 
@@ -119,7 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented JavaScript Proxy to properly forward all properties and method calls to underlying PrismaClient
 - Added TypeScript index signature for better compatibility with BaseService
 
-## [0.4.2] - 2025-05-19
+## [0.4.2]
 
 ### Changed
 
@@ -133,7 +133,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completely eliminated dependency on default @prisma/client import
 - Updated examples in codebase to reflect required PrismaClient provision
 
-## [0.4.1] - 2025-05-19
+## [0.4.1]
 
 ### Fixed
 
@@ -142,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved factory method to handle cases with and without custom clients
 - Resolved "UnknownDependenciesException" errors when using multiple clients
 
-## [0.4.0] - 2025-05-19
+## [0.4.0]
 
 ### Added
 

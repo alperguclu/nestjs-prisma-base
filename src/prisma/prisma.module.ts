@@ -1,5 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
+import { PrismaModuleDTOOptions } from '../common/dto-config.interface';
+import { configureDTOs } from '../common/configurable-dtos';
+import { configureSwaggerDTOs } from '../common/swagger-dtos';
 
 export interface PrismaModuleOptions {
   /**
@@ -18,6 +21,11 @@ export interface PrismaModuleOptions {
    * Useful when using multiple Prisma clients
    */
   providerToken?: string | symbol;
+
+  /**
+   * DTO configuration options for automatic setup
+   */
+  dtoOptions?: PrismaModuleDTOOptions;
 }
 
 export interface PrismaFeatureOptions {
@@ -36,6 +44,11 @@ export interface PrismaFeatureOptions {
    * Whether to use a custom provider token format (default: '${name.toUpperCase()}_PRISMA_SERVICE')
    */
   providerToken?: string | symbol;
+
+  /**
+   * DTO configuration options for automatic setup
+   */
+  dtoOptions?: PrismaModuleDTOOptions;
 }
 
 @Module({})
@@ -49,6 +62,11 @@ export class PrismaModule {
 
     if (!options.prismaClient) {
       throw new Error('PrismaClient instance is required when using PrismaModule.forRoot()');
+    }
+
+    // Configure DTOs if options are provided
+    if (options.dtoOptions) {
+      this.applyDTOConfiguration(options.dtoOptions);
     }
 
     return {
@@ -77,6 +95,11 @@ export class PrismaModule {
       throw new Error('PrismaClient instance is required when using PrismaModule.forFeature()');
     }
 
+    // Configure DTOs if options are provided
+    if (options.dtoOptions) {
+      this.applyDTOConfiguration(options.dtoOptions);
+    }
+
     return {
       module: PrismaModule,
       providers: [
@@ -89,5 +112,38 @@ export class PrismaModule {
       ],
       exports: [providerToken],
     };
+  }
+
+  /**
+   * Configure DTOs based on provided options
+   * @private
+   */
+  private static applyDTOConfiguration(options: PrismaModuleDTOOptions): void {
+    // Configure general DTO settings
+    if (options.dtoConfig) {
+      configureDTOs(options.dtoConfig);
+    }
+
+    // Configure Swagger integration
+    if (options.swaggerIntegration) {
+      configureSwaggerDTOs(options.swaggerIntegration);
+    }
+
+    // Log configuration for debugging (in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🎯 NestJS Prisma Base - DTO Configuration Applied:', {
+        dtoConfig: options.dtoConfig || 'Using defaults',
+        swaggerIntegration: options.swaggerIntegration?.enabled ? 'Enabled' : 'Disabled',
+        minimalDTOs: options.useMinimalDTOs ? 'Enabled' : 'Disabled',
+      });
+    }
+  }
+
+  /**
+   * Configure DTOs independently (useful for testing or manual configuration)
+   * @param options DTO configuration options
+   */
+  static configureDTOs(options: PrismaModuleDTOOptions): void {
+    this.applyDTOConfiguration(options);
   }
 }

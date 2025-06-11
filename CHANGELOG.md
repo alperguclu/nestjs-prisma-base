@@ -1,5 +1,64 @@
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.5.1] - 2024-12-19
+
+### Added
+
+- **Limit Protection**: Configurable pagination limits to prevent performance issues
+- `PaginationConfig` interface for customizing pagination behavior
+- Automatic validation of page and limit parameters
+- Support for unlimited results (when explicitly enabled)
+- `validateLimit()` and `validatePage()` methods in BaseService
+- Enhanced error messages with `BadRequestException` for invalid pagination parameters
+
+### Changed
+
+- `findAll()` and `findAllSimple()` methods now validate pagination parameters
+- Default limit handling: uses configured `defaultLimit` when no limit is provided
+- Pagination methods now handle unlimited requests (limit = -1 or 0) when `allowUnlimited: true`
+
+### Security
+
+- Maximum limit protection prevents excessively large result sets
+- Disabled unlimited results by default to prevent performance issues
+
+### Documentation
+
+- Added comprehensive limit protection documentation to README
+- Updated examples with pagination configuration patterns
+- Added validation examples and error scenarios
+
+## [0.5.0] - 2024-12-19
+
+### Added
+
+- **Enhanced Pagination**: Complete rewrite of pagination system
+- `PaginationResult<T>` interface with data and metadata
+- `PaginationMeta` interface with comprehensive pagination information
+- Parallel queries for better performance (data + count)
+- `findAllSimple()` method for backward compatibility
+
+### Changed
+
+- **BREAKING**: `findAll()` now returns `PaginationResult<T>` instead of `T[]`
+- Enhanced pagination metadata: total, page, limit, totalPages, hasNext, hasPrev
+- Improved BaseController typing and documentation
+
+### Deprecated
+
+- `findAllSimple()` method is now the backward compatibility option
+
+### Documentation
+
+- Updated README with comprehensive pagination examples
+- Added migration guide for v0.5.0
+- Enhanced examples with new pagination response format
+
 ## [0.4.4] - 2025-05-19
 
 ### Fixed

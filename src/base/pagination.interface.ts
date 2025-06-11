@@ -35,3 +35,15 @@ export interface PaginationQuery {
   /** Number of records per page (default: 10) */
   limit?: number;
 }
+
+/**
+ * Pagination configuration interface
+ */
+export interface PaginationConfig {
+  /** Default number of records per page (default: 10) */
+  defaultLimit: number;
+  /** Maximum allowed limit per page (default: 100) */
+  maxLimit: number;
+  /** Whether to allow unlimited results (limit = -1 or 0) (default: false) */
+  allowUnlimited?: boolean;
+}

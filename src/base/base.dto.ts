@@ -23,4 +23,12 @@ export abstract class BaseResponseDto extends BaseDto {
   id!: string | number;
   createdAt?: Date;
   updatedAt?: Date;
+
+  /**
+   * Optional response message providing additional context about the operation
+   * @example "User created successfully"
+   * @example "Profile updated"
+   * @example "Operation completed successfully"
+   */
+  message?: string;
 }

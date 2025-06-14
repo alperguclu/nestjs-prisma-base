@@ -1,6 +1,6 @@
 {
   "name": "nestjs-prisma-base",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A comprehensive NestJS package providing base classes, utilities, and decorators for building CRUD APIs with Prisma ORM integration, featuring pagination, search, filtering, relation loading, configurable DTOs, and modular composition capabilities.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

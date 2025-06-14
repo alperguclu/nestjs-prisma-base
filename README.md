@@ -20,7 +20,8 @@ A comprehensive NestJS package providing base classes, utilities, and decorators
 - **Configurable DTOs**: Global and per-class configuration
 - **Swagger Integration**: Automatic API documentation
 - **Minimal DTOs**: Maximum control with empty base classes
-- **Modular Composition**: Mix-and-match DTO features with mixins **NEW in v1.0.0**
+- **Modular Composition**: Mix-and-match DTO features with mixins
+- **Response Messages**: Optional message fields for consistent API feedback **NEW in v1.1.0**
 
 ### ⚡ **Developer Experience**
 
@@ -101,6 +102,7 @@ export class UpdateUserDto extends BaseUpdateDto {
 export class UserResponseDto extends BaseResponseDto {
   name: string;
   email: string;
+  // message field available for API feedback
 }
 ```
 
@@ -253,6 +255,7 @@ export class UserResponseDto extends SwaggerBaseResponseDto {
 
 ## Version History
 
+- **v1.1.0** - Response message fields for consistent API feedback
 - **v1.0.0** - Modular DTO composition with mixins
 - **v0.9.0** - Configurable DTOs and Swagger integration
 - **v0.8.0** - Relation loading and module factories

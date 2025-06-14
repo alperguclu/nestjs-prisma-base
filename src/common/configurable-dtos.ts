@@ -6,10 +6,16 @@ import { DTOConfig } from './dto-config.interface';
 let globalDTOConfig: DTOConfig = {
   includeTimestamps: true,
   includeId: true,
+  includeMessage: false,
   swaggerEnabled: false,
   timestampFields: {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
+  },
+  messageField: {
+    fieldName: 'message',
+    defaultValue: undefined,
+    maxLength: 500,
   },
 };
 
@@ -17,6 +23,25 @@ let globalDTOConfig: DTOConfig = {
  * Set global DTO configuration
  */
 export function configureDTOs(config: Partial<DTOConfig>): void {
+  // Validate message field configuration
+  if (config.messageField) {
+    if (config.messageField.maxLength !== undefined && config.messageField.maxLength <= 0) {
+      throw new Error('messageField.maxLength must be a positive number');
+    }
+
+    if (config.messageField.fieldName !== undefined && typeof config.messageField.fieldName !== 'string') {
+      throw new Error('messageField.fieldName must be a string');
+    }
+
+    if (config.messageField.fieldName !== undefined && config.messageField.fieldName.trim() === '') {
+      throw new Error('messageField.fieldName cannot be empty');
+    }
+
+    if (config.messageField.defaultValue !== undefined && typeof config.messageField.defaultValue !== 'string') {
+      throw new Error('messageField.defaultValue must be a string');
+    }
+  }
+
   globalDTOConfig = { ...globalDTOConfig, ...config };
 }
 
@@ -121,6 +146,11 @@ export class ConfigurableBaseResponseDto {
   updatedAt?: Date;
 
   /**
+   * Optional response message - conditionally included based on configuration
+   */
+  message?: string;
+
+  /**
    * Helper method to check if timestamps should be included
    */
   static shouldIncludeTimestamps(): boolean {
@@ -134,6 +164,14 @@ export class ConfigurableBaseResponseDto {
   static shouldIncludeId(): boolean {
     const config = this.getConfig();
     return config.includeId ?? true;
+  }
+
+  /**
+   * Helper method to check if message field should be included
+   */
+  static shouldIncludeMessage(): boolean {
+    const config = this.getConfig();
+    return config.includeMessage ?? false;
   }
 
   /**
@@ -152,6 +190,18 @@ export class ConfigurableBaseResponseDto {
     return {
       createdAt: config.timestampFields?.createdAt ?? 'createdAt',
       updatedAt: config.timestampFields?.updatedAt ?? 'updatedAt',
+    };
+  }
+
+  /**
+   * Get message field configuration
+   */
+  static getMessageFieldConfig(): { fieldName: string; defaultValue?: string; maxLength: number } {
+    const config = this.getConfig();
+    return {
+      fieldName: config.messageField?.fieldName ?? 'message',
+      defaultValue: config.messageField?.defaultValue,
+      maxLength: config.messageField?.maxLength ?? 500,
     };
   }
 }

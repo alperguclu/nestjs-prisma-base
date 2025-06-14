@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - Response Message Fields
+
+### Added
+
+- **Optional Message Fields**: Consistent response messaging across all DTO variants
+- `message?: string` field added to `BaseResponseDto` for standardized API feedback
+- `includeMessage` configuration option in `DTOConfig` for enabling message fields globally
+- `messageField` configuration object for customizing field name, default value, and max length
+- Message field support in `ConfigurableBaseResponseDto` with helper methods
+- `shouldIncludeMessage()` and `getMessageFieldConfig()` utility methods
+- `WithMessage(Base, config?)` mixin for adding message fields to any DTO
+- Message field integration in `SwaggerBaseResponseDto` with automatic API documentation
+- `MinimalBaseMessageDto` class for minimal DTOs with only message field
+- Enhanced `MixinCombinations` with message field variants:
+  - `WithFullAuditTrailAndMessage()` - Full audit trail + message
+  - `WithSoftDeleteTimestampsAndMessage()` - Soft delete + timestamps + message
+  - `WithStandardEntityAndMessage()` - ID + timestamps + message
+  - `WithCompleteEntityAndMessage()` - All entity fields + message
+  - `WithResponseEntity()` - Standard response entity (ID + timestamps + message)
+  - `WithMinimalResponse()` - Minimal response (ID + message)
+- Configuration validation for message field settings in `configureDTOs()`
+
+### Enhanced
+
+- **Backward Compatibility**: All changes are optional and non-breaking
+- **Configuration System**: Extended existing DTO configuration to support message fields
+- **Swagger Integration**: Automatic ApiProperty decorators for message fields when enabled
+- **Type Safety**: Full TypeScript support with proper type definitions
+- **Validation**: Built-in validation for message field configuration options
+
+### Technical Features
+
+- **Optional by Default**: Message fields disabled by default (`includeMessage: false`)
+- **Configurable**: Custom field names, default values, and length limits supported
+- **Flexible**: Works with all DTO variants (Base, Configurable, Swagger, Minimal, Mixins)
+- **Performance**: Minimal overhead when not used, optional field omitted in JSON
+- **Developer Experience**: Consistent API response messaging across applications
+
 ## [1.0.0] - Modular DTO Composition (Mixins)
 
 ### Added

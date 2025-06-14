@@ -75,3 +75,14 @@ export class MinimalBaseEntityDto {
    */
   updatedAt?: Date;
 }
+
+/**
+ * Minimal Base DTO with only message field
+ * For cases where only the message field is needed in responses
+ */
+export class MinimalBaseMessageDto {
+  /**
+   * Response message
+   */
+  message?: string;
+}

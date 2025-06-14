@@ -20,6 +20,7 @@ export {
   MinimalBaseIdDto,
   MinimalBaseTimestampDto,
   MinimalBaseEntityDto,
+  MinimalBaseMessageDto,
 } from './common/minimal-dtos';
 
 // v0.9.0: Swagger-Enhanced DTOs
@@ -40,15 +41,15 @@ export {
   WithAuditFields,
   WithVersioning,
   WithId,
+  WithMessage,
   composeMixins,
   MixinCombinations,
   DisableSwagger,
   DisableValidation,
   hasSwaggerDisabled,
   hasValidationDisabled,
-  MixinConfig,
-  MixinType,
-  ComposedMixin,
+  type MixinConfig,
+  type Constructor,
 } from './common/dto-mixins';
 
 // v0.9.0: DTO Configuration Interfaces

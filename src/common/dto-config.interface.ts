@@ -15,6 +15,12 @@ export interface DTOConfig {
   includeId?: boolean;
 
   /**
+   * Whether to include message field in response DTOs
+   * @default false
+   */
+  includeMessage?: boolean;
+
+  /**
    * Whether Swagger integration is enabled
    * @default false
    */
@@ -26,6 +32,15 @@ export interface DTOConfig {
   timestampFields?: {
     createdAt?: string;
     updatedAt?: string;
+  };
+
+  /**
+   * Configuration for message field
+   */
+  messageField?: {
+    fieldName?: string;
+    defaultValue?: string;
+    maxLength?: number;
   };
 }
 
@@ -70,6 +85,10 @@ export interface SwaggerDTOConfig {
       example?: any;
     };
     updatedAt?: {
+      description?: string;
+      example?: any;
+    };
+    message?: {
       description?: string;
       example?: any;
     };

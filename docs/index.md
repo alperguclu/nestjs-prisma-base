@@ -25,6 +25,7 @@ The package currently includes comprehensive documentation for:
 - **DTO Configuration** - Global and per-class configuration
 - **Swagger Integration** - Automatic API documentation
 - **Mixin System** - Composable DTO building (v1.0.0)
+- **Response Message Fields** - Consistent API feedback messaging (v1.1.0)
 - **Module Factories** - Auto-generate complete modules
 - **Multiple Database Support** - Work with multiple Prisma clients
 
@@ -73,7 +74,7 @@ Future documentation expansions may include:
 
 ## 📊 **Package Information**
 
-- **Current Version**: v1.0.0
+- **Current Version**: v1.1.0
 - **License**: MIT
 - **Node.js**: >= 16.0.0
 - **NestJS**: >= 9.0.0

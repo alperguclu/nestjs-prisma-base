@@ -12,8 +12,9 @@ This guide covers all features available in nestjs-prisma-base package with deta
 6. [Endpoint Control](#endpoint-control)
 7. [DTO Configuration](#dto-configuration)
 8. [Mixin System](#mixin-system)
-9. [Module Factories](#module-factories)
-10. [Multiple Database Support](#multiple-database-support)
+9. [Response Message Fields](#response-message-fields)
+10. [Module Factories](#module-factories)
+11. [Multiple Database Support](#multiple-database-support)
 
 ## Core CRUD Operations
 
@@ -488,7 +489,13 @@ export class UserDto extends WithAuditFields(BaseDto) {
 ```typescript
 import { composeMixins } from 'nestjs-prisma-base';
 
-export class CompleteUserDto extends composeMixins(BaseDto, WithTimestamps, WithAuditFields, WithVersioning, WithSoftDelete) {
+export class CompleteUserDto extends composeMixins(
+  BaseDto,
+  WithTimestamps,
+  WithAuditFields,
+  WithVersioning,
+  WithSoftDelete
+) {
   name: string;
   email: string;
   // Includes all mixin fields
@@ -541,123 +548,235 @@ export class UserDto extends DisableValidation(WithAuditFields(BaseDto)) {
 }
 ```
 
+## Response Message Fields
+
+### Overview
+
+The message field feature provides consistent response messaging across all API responses. All response DTOs can include an optional `message?: string` field for providing contextual feedback to API consumers.
+
+### Basic Usage
+
+```typescript
+// Message field is available in all response DTOs
+export class UserResponseDto extends BaseResponseDto {
+  name: string;
+  email: string;
+  // message?: string is inherited from BaseResponseDto
+}
+
+// Usage in controllers
+@Post()
+async createUser(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+  const user = await this.userService.create(createUserDto);
+  return {
+    ...user,
+    message: 'User created successfully'
+  };
+}
+```
+
+### Configuration
+
+#### Global Configuration
+
+Enable message fields globally:
+
+```typescript
+import { configureDTOs } from 'nestjs-prisma-base';
+
+configureDTOs({
+  includeMessage: true, // Enable message fields globally
+  messageField: {
+    fieldName: 'message', // Custom field name (default: 'message')
+    defaultValue: 'Success', // Default message value
+    maxLength: 500, // Maximum message length
+  },
+});
+```
+
+#### Per-Class Configuration
+
+Configure message fields for specific DTOs:
+
+```typescript
+export class UserResponseDto extends ConfigurableBaseResponseDto {
+  name: string;
+  email: string;
+}
+
+// Configure this specific DTO
+UserResponseDto.configure({
+  includeMessage: true,
+  messageField: {
+    defaultValue: 'User operation completed',
+  },
+});
+```
+
+### DTO Variants
+
+#### Configurable DTOs
+
+```typescript
+import { ConfigurableBaseResponseDto } from 'nestjs-prisma-base';
+
+export class UserResponseDto extends ConfigurableBaseResponseDto {
+  name: string;
+  email: string;
+  // message field conditionally included based on configuration
+}
+
+// Check if message field is enabled
+const shouldInclude = UserResponseDto.shouldIncludeMessage();
+const messageConfig = UserResponseDto.getMessageFieldConfig();
+```
+
+#### Swagger DTOs
+
+```typescript
+import { SwaggerBaseResponseDto } from 'nestjs-prisma-base';
+
+export class UserResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() name: string;
+  @ApiProperty() email: string;
+  // message field with automatic Swagger documentation
+}
+```
+
+#### Minimal DTOs
+
+```typescript
+import { MinimalBaseMessageDto } from 'nestjs-prisma-base';
+
+// For responses that only need message field
+export class StatusResponseDto extends MinimalBaseMessageDto {
+  // Contains only: message?: string
+}
+```
+
+### Mixin Integration
+
+#### WithMessage Mixin
+
+```typescript
+import { WithMessage } from 'nestjs-prisma-base';
+
+export class UserDto extends WithMessage(BaseDto, {
+  defaultMessage: 'User operation successful',
+  maxLength: 200,
+}) {
+  name: string;
+  email: string;
+}
+```
+
+#### Enhanced Mixin Combinations
+
+```typescript
+import { MixinCombinations } from 'nestjs-prisma-base';
+
+// Standard response entity with message
+export class UserResponseDto extends MixinCombinations.WithResponseEntity(BaseDto) {
+  name: string;
+  // Includes: id, createdAt, updatedAt, message
+}
+
+// Minimal response with message
+export class StatusDto extends MixinCombinations.WithMinimalResponse(BaseDto) {
+  status: string;
+  // Includes: id, message
+}
+
+// Complete entity with message
+export class CompleteUserDto extends MixinCombinations.WithCompleteEntityAndMessage(BaseDto) {
+  name: string;
+  // Includes: id, createdAt, updatedAt, createdBy, updatedBy, version, deletedAt, isActive, message
+}
+```
+
+### Common Usage Patterns
+
+#### Success Messages
+
+```typescript
+// Create operation
+return {
+  ...user,
+  message: 'User created successfully',
+};
+
+// Update operation
+return {
+  ...updatedUser,
+  message: 'Profile updated successfully',
+};
+
+// Delete operation
+return {
+  id: deletedId,
+  message: 'User deleted successfully',
+};
+```
+
+#### Informational Messages
+
+```typescript
+// No data found
+return {
+  data: [],
+  message: 'No users found matching criteria',
+};
+
+// Data synchronized
+return {
+  ...syncResult,
+  message: 'Data synchronized with external service',
+};
+```
+
+#### Contextual Feedback
+
+```typescript
+// Login response
+return {
+  user: authenticatedUser,
+  token: jwtToken,
+  message: 'Login successful',
+};
+
+// Password change
+return {
+  success: true,
+  message: 'Password changed successfully. Please log in with your new password.',
+};
+```
+
+### Validation
+
+Configuration validation ensures proper setup:
+
+```typescript
+// These will throw validation errors:
+configureDTOs({
+  messageField: {
+    maxLength: -1, // Error: must be positive
+    fieldName: '', // Error: cannot be empty
+    defaultValue: 123, // Error: must be string
+  },
+});
+```
+
+### Performance Considerations
+
+- **Optional by default**: No impact on existing applications
+- **JSON serialization**: Undefined fields are omitted from responses
+- **Memory efficient**: Single optional string field per response
+- **Configurable**: Can be disabled entirely if not needed
+
 ## Module Factories
 
 ### Basic Factory Usage
 
-```typescript
-import { createModelModule, EndpointType } from 'nestjs-prisma-base';
-
-// Create module with specific endpoints
-export const UserModule = createModelModule({
-  modelName: 'user',
-  routePath: 'users',
-  enabledEndpoints: [EndpointType.FIND_ALL, EndpointType.FIND_ONE, EndpointType.CREATE],
-});
-
-// Create module with all endpoints
-export const ProductModule = createModelModule({
-  modelName: 'product',
-  routePath: 'products',
-  enableAllEndpoints: true,
-});
 ```
 
-### Advanced Factory Configuration
-
-```typescript
-export const UserModule = createModelModule({
-  modelName: 'user',
-  routePath: 'users',
-  enableAllEndpoints: true,
-  serviceType: CustomUserService, // Use custom service
-  providers: [UserValidationService], // Additional providers
-  imports: [EmailModule], // Additional imports
-  exports: ['userService'], // Additional exports
-});
-```
-
-### Using in App Module
-
-```typescript
-@Module({
-  imports: [
-    PrismaModule.forRoot({ prismaClient: new PrismaClient() }),
-    UserModule, // Generated module
-    ProductModule, // Generated module
-  ],
-})
-export class AppModule {}
-```
-
-## Multiple Database Support
-
-### Basic Multi-Database Setup
-
-```typescript
-@Module({
-  imports: [
-    // First database
-    PrismaModule.forRoot({
-      prismaClient: new UsersDbClient({
-        datasources: { db: { url: process.env.USERS_DATABASE_URL } },
-      }),
-      providerToken: 'USERS_PRISMA_SERVICE',
-    }),
-
-    // Second database
-    PrismaModule.forRoot({
-      prismaClient: new ProductsDbClient({
-        datasources: { db: { url: process.env.PRODUCTS_DATABASE_URL } },
-      }),
-      providerToken: 'PRODUCTS_PRISMA_SERVICE',
-    }),
-  ],
-})
-export class AppModule {}
-```
-
-### Services for Different Databases
-
-```typescript
-@Injectable()
-export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
-  protected readonly modelName = 'user';
-
-  constructor(@Inject('USERS_PRISMA_SERVICE') prisma: PrismaService) {
-    super(prisma);
-  }
-}
-
-@Injectable()
-export class ProductService extends BaseService<Product, CreateProductDto, UpdateProductDto> {
-  protected readonly modelName = 'product';
-
-  constructor(@Inject('PRODUCTS_PRISMA_SERVICE') prisma: PrismaService) {
-    super(prisma);
-  }
-}
-```
-
-### Using forFeature for Cleaner Organization
-
-```typescript
-@Module({
-  imports: [
-    PrismaModule.forFeature({
-      name: 'users', // Creates USERS_PRISMA_SERVICE token
-      prismaClient: new UsersDbClient({
-        datasources: { db: { url: process.env.USERS_DATABASE_URL } },
-      }),
-    }),
-
-    PrismaModule.forFeature({
-      name: 'products', // Creates PRODUCTS_PRISMA_SERVICE token
-      prismaClient: new ProductsDbClient({
-        datasources: { db: { url: process.env.PRODUCTS_DATABASE_URL } },
-      }),
-    }),
-  ],
-})
-export class AppModule {}
 ```

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 // Optional class-validator imports - will work if class-validator is available
-let IsOptional: any, IsDateString: any, IsNumber: any, IsBoolean: any;
+let IsOptional: any, IsDateString: any, IsNumber: any, IsBoolean: any, IsString: any, MaxLength: any;
 
 try {
   const classValidator = require('class-validator');
@@ -9,17 +9,23 @@ try {
   IsDateString = classValidator.IsDateString;
   IsNumber = classValidator.IsNumber;
   IsBoolean = classValidator.IsBoolean;
+  IsString = classValidator.IsString;
+  MaxLength = classValidator.MaxLength;
 } catch (error) {
   // class-validator not available - decorators will be no-ops
   IsOptional =
     IsDateString =
     IsNumber =
     IsBoolean =
+    IsString =
       () => () => {};
+  MaxLength = () => () => {};
 }
 
-// Constructor type for mixin composition
-type Constructor<T = {}> = new (...args: any[]) => T;
+/**
+ * Constructor type for mixin base classes
+ */
+export type Constructor<T = {}> = new (...args: any[]) => T;
 
 /**
  * Mixin configuration options
@@ -298,6 +304,64 @@ export function WithId<T extends Constructor>(Base: T, config?: MixinConfig) {
 }
 
 /**
+ * Mixin that adds message field for response context
+ *
+ * @example
+ * ```typescript
+ * class UserResponseDto extends WithMessage(BaseDto) {
+ *   name: string;
+ * }
+ * ```
+ */
+export function WithMessage<T extends Constructor>(
+  Base: T,
+  config?: MixinConfig & {
+    fieldName?: string;
+    defaultMessage?: string;
+    maxLength?: number;
+  }
+) {
+  const mixinConfig = mergeMixinConfig(config);
+  const fieldName = config?.fieldName || 'message';
+
+  class MessageMixin extends Base {
+    message?: string;
+  }
+
+  // Apply Swagger decorators
+  if (mixinConfig.swagger?.enabled !== false) {
+    ApiProperty({
+      description: 'Response message providing additional context',
+      example: config?.defaultMessage || 'Operation completed successfully',
+      type: String,
+      required: false,
+      maxLength: config?.maxLength || 500,
+    })(MessageMixin.prototype, fieldName);
+  }
+
+  // Apply validation decorators
+  if (mixinConfig.validation?.enabled !== false) {
+    IsOptional()(MessageMixin.prototype, fieldName);
+    IsString()(MessageMixin.prototype, fieldName);
+    if (config?.maxLength) {
+      MaxLength(config.maxLength)(MessageMixin.prototype, fieldName);
+    }
+  }
+
+  // If a custom field name is provided, define it dynamically
+  if (fieldName !== 'message') {
+    Object.defineProperty(MessageMixin.prototype, fieldName, {
+      value: undefined,
+      writable: true,
+      enumerable: true,
+      configurable: true,
+    });
+  }
+
+  return MessageMixin;
+}
+
+/**
  * Utility type to extract the type from a mixin constructor
  */
 export type MixinType<T> = T extends Constructor<infer U> ? U : never;
@@ -350,6 +414,19 @@ export class MixinCombinations {
   }
 
   /**
+   * Full audit trail with message: timestamps + audit fields + versioning + message
+   */
+  static WithFullAuditTrailAndMessage<T extends Constructor>(Base: T, config?: MixinConfig) {
+    return composeMixins(
+      Base,
+      (base) => WithTimestamps(base, config),
+      (base) => WithAuditFields(base, config),
+      (base) => WithVersioning(base, config),
+      (base) => WithMessage(base, config)
+    );
+  }
+
+  /**
    * Soft delete with timestamps
    */
   static WithSoftDeleteAndTimestamps<T extends Constructor>(Base: T, config?: MixinConfig) {
@@ -357,6 +434,18 @@ export class MixinCombinations {
       Base,
       (base) => WithTimestamps(base, config),
       (base) => WithSoftDelete(base, config)
+    );
+  }
+
+  /**
+   * Soft delete with timestamps and message
+   */
+  static WithSoftDeleteTimestampsAndMessage<T extends Constructor>(Base: T, config?: MixinConfig) {
+    return composeMixins(
+      Base,
+      (base) => WithTimestamps(base, config),
+      (base) => WithSoftDelete(base, config),
+      (base) => WithMessage(base, config)
     );
   }
 
@@ -372,6 +461,18 @@ export class MixinCombinations {
   }
 
   /**
+   * Standard entity with message: ID + timestamps + message
+   */
+  static WithStandardEntityAndMessage<T extends Constructor>(Base: T, config?: MixinConfig) {
+    return composeMixins(
+      Base,
+      (base) => WithId(base, config),
+      (base) => WithTimestamps(base, config),
+      (base) => WithMessage(base, config)
+    );
+  }
+
+  /**
    * Complete entity: ID + timestamps + audit fields + soft delete + versioning
    */
   static WithCompleteEntity<T extends Constructor>(Base: T, config?: MixinConfig) {
@@ -382,6 +483,44 @@ export class MixinCombinations {
       (base) => WithAuditFields(base, config),
       (base) => WithSoftDelete(base, config),
       (base) => WithVersioning(base, config)
+    );
+  }
+
+  /**
+   * Complete entity with message: ID + timestamps + audit fields + soft delete + versioning + message
+   */
+  static WithCompleteEntityAndMessage<T extends Constructor>(Base: T, config?: MixinConfig) {
+    return composeMixins(
+      Base,
+      (base) => WithId(base, config),
+      (base) => WithTimestamps(base, config),
+      (base) => WithAuditFields(base, config),
+      (base) => WithSoftDelete(base, config),
+      (base) => WithVersioning(base, config),
+      (base) => WithMessage(base, config)
+    );
+  }
+
+  /**
+   * Response entity: ID + timestamps + message (common for API responses)
+   */
+  static WithResponseEntity<T extends Constructor>(Base: T, config?: MixinConfig) {
+    return composeMixins(
+      Base,
+      (base) => WithId(base, config),
+      (base) => WithTimestamps(base, config),
+      (base) => WithMessage(base, config)
+    );
+  }
+
+  /**
+   * Minimal response: ID + message (lightweight API responses)
+   */
+  static WithMinimalResponse<T extends Constructor>(Base: T, config?: MixinConfig) {
+    return composeMixins(
+      Base,
+      (base) => WithId(base, config),
+      (base) => WithMessage(base, config)
     );
   }
 }

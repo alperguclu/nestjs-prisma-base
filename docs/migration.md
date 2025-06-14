@@ -2,6 +2,65 @@
 
 This guide helps you migrate between different versions of nestjs-prisma-base.
 
+## Upgrading to v1.1.0
+
+### New Features
+
+- **Optional Message Fields**: Response DTOs now support optional message fields for consistent API feedback
+- **Enhanced Mixin Combinations**: New mixin combinations that include message fields
+- **Configuration Options**: New configuration options for message field behavior
+
+### Breaking Changes
+
+**None** - v1.1.0 is fully backward compatible.
+
+### Migration
+
+#### Optional: Enable Message Fields
+
+```typescript
+import { configureDTOs } from 'nestjs-prisma-base';
+
+// Enable message fields globally (optional)
+configureDTOs({
+  includeMessage: true,
+  messageField: {
+    defaultValue: 'Operation completed successfully',
+    maxLength: 500,
+  },
+});
+```
+
+#### Optional: Use New Mixin Combinations
+
+```typescript
+import { MixinCombinations } from 'nestjs-prisma-base';
+
+// Enhanced combinations with message fields
+export class UserResponseDto extends MixinCombinations.WithResponseEntity(BaseDto) {
+  name: string;
+  // Includes: id, createdAt, updatedAt, message
+}
+
+export class StatusDto extends MixinCombinations.WithMinimalResponse(BaseDto) {
+  status: string;
+  // Includes: id, message
+}
+```
+
+#### Optional: Use WithMessage Mixin
+
+```typescript
+import { WithMessage } from 'nestjs-prisma-base';
+
+export class UserDto extends WithMessage(BaseDto, {
+  defaultMessage: 'User operation successful',
+}) {
+  name: string;
+  email: string;
+}
+```
+
 ## Upgrading to v1.0.0
 
 ### New Features

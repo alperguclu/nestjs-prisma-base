@@ -70,7 +70,7 @@ function createConditionalApiProperty(options: any = {}) {
 /**
  * Get field configuration for Swagger
  */
-function getFieldConfig(fieldName: 'id' | 'createdAt' | 'updatedAt') {
+function getFieldConfig(fieldName: 'id' | 'createdAt' | 'updatedAt' | 'message') {
   const config = globalSwaggerConfig.fieldConfig?.[fieldName];
   const includeDescriptions = globalSwaggerConfig.includeDescriptions ?? true;
   const includeExamples = globalSwaggerConfig.includeExamples ?? true;
@@ -173,6 +173,11 @@ export class SwaggerBaseResponseDto {
    * Last update timestamp with automatic Swagger documentation
    */
   updatedAt?: Date;
+
+  /**
+   * Optional response message with automatic Swagger documentation
+   */
+  message?: string;
 }
 
 /**
@@ -188,31 +193,40 @@ function applySwaggerDecorators() {
   const idConfig = getFieldConfig('id');
   const createdAtConfig = getFieldConfig('createdAt');
   const updatedAtConfig = getFieldConfig('updatedAt');
+  const messageConfig = getFieldConfig('message');
 
   // Apply ApiProperty decorators if Swagger is enabled
   if (globalSwaggerConfig.enabled) {
     createConditionalApiProperty({
-      description: idConfig.description,
-      example: idConfig.example,
+      description: idConfig.description || 'Unique identifier',
+      example: idConfig.example || 1,
       type: Number,
       required: false,
     })(SwaggerBaseResponseDto.prototype, 'id');
 
     if (globalSwaggerConfig.includeTimestamps) {
       createConditionalApiProperty({
-        description: createdAtConfig.description,
-        example: createdAtConfig.example,
+        description: createdAtConfig.description || 'Creation timestamp',
+        example: createdAtConfig.example || '2023-01-01T00:00:00.000Z',
         type: Date,
         required: false,
       })(SwaggerBaseResponseDto.prototype, 'createdAt');
 
       createConditionalApiProperty({
-        description: updatedAtConfig.description,
-        example: updatedAtConfig.example,
+        description: updatedAtConfig.description || 'Last update timestamp',
+        example: updatedAtConfig.example || '2023-01-01T12:00:00.000Z',
         type: Date,
         required: false,
       })(SwaggerBaseResponseDto.prototype, 'updatedAt');
     }
+
+    // Apply message field decorator
+    createConditionalApiProperty({
+      description: messageConfig.description || 'Response message providing additional context about the operation',
+      example: messageConfig.example || 'Operation completed successfully',
+      type: String,
+      required: false,
+    })(SwaggerBaseResponseDto.prototype, 'message');
   }
 }
 

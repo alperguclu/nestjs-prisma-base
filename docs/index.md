@@ -74,7 +74,7 @@ Future documentation expansions may include:
 
 ## 📊 **Package Information**
 
-- **Current Version**: v1.1.0
+- **Current Version**: v1.1.1
 - **License**: MIT
 - **Node.js**: >= 16.0.0
 - **NestJS**: >= 9.0.0

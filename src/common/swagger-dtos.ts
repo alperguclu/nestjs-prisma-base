@@ -200,7 +200,7 @@ function applySwaggerDecorators() {
     createConditionalApiProperty({
       description: idConfig.description || 'Unique identifier',
       example: idConfig.example || 1,
-      type: Number,
+      type: () => Number,
       required: false,
     })(SwaggerBaseResponseDto.prototype, 'id');
 
@@ -208,14 +208,14 @@ function applySwaggerDecorators() {
       createConditionalApiProperty({
         description: createdAtConfig.description || 'Creation timestamp',
         example: createdAtConfig.example || '2023-01-01T00:00:00.000Z',
-        type: Date,
+        type: () => Date,
         required: false,
       })(SwaggerBaseResponseDto.prototype, 'createdAt');
 
       createConditionalApiProperty({
         description: updatedAtConfig.description || 'Last update timestamp',
         example: updatedAtConfig.example || '2023-01-01T12:00:00.000Z',
-        type: Date,
+        type: () => Date,
         required: false,
       })(SwaggerBaseResponseDto.prototype, 'updatedAt');
     }
@@ -224,7 +224,7 @@ function applySwaggerDecorators() {
     createConditionalApiProperty({
       description: messageConfig.description || 'Response message providing additional context about the operation',
       example: messageConfig.example || 'Operation completed successfully',
-      type: String,
+      type: () => String,
       required: false,
     })(SwaggerBaseResponseDto.prototype, 'message');
   }

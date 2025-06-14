@@ -109,6 +109,7 @@ export function WithTimestamps<T extends Constructor>(Base: T, config?: MixinCon
     ApiProperty({
       description: 'Creation timestamp',
       example: '2023-01-01T00:00:00.000Z',
+      type: () => Date,
       required: false,
     })(TimestampsMixin.prototype, 'createdAt');
   }
@@ -123,6 +124,7 @@ export function WithTimestamps<T extends Constructor>(Base: T, config?: MixinCon
     ApiProperty({
       description: 'Last update timestamp',
       example: '2023-01-01T12:00:00.000Z',
+      type: () => Date,
       required: false,
     })(TimestampsMixin.prototype, 'updatedAt');
   }
@@ -158,6 +160,7 @@ export function WithSoftDelete<T extends Constructor>(Base: T, config?: MixinCon
     ApiProperty({
       description: 'Soft deletion timestamp',
       example: '2023-01-01T18:00:00.000Z',
+      type: () => Date,
       required: false,
     })(SoftDeleteMixin.prototype, 'deletedAt');
   }
@@ -173,6 +176,7 @@ export function WithSoftDelete<T extends Constructor>(Base: T, config?: MixinCon
       description: 'Whether the record is active (not soft deleted)',
       example: true,
       default: true,
+      type: () => Boolean,
       required: false,
     })(SoftDeleteMixin.prototype, 'isActive');
   }
@@ -208,6 +212,7 @@ export function WithAuditFields<T extends Constructor>(Base: T, config?: MixinCo
     ApiProperty({
       description: 'ID of user who created this record',
       example: 1,
+      type: () => Number,
       required: false,
     })(AuditFieldsMixin.prototype, 'createdBy');
   }
@@ -222,6 +227,7 @@ export function WithAuditFields<T extends Constructor>(Base: T, config?: MixinCo
     ApiProperty({
       description: 'ID of user who last updated this record',
       example: 2,
+      type: () => Number,
       required: false,
     })(AuditFieldsMixin.prototype, 'updatedBy');
   }
@@ -257,6 +263,7 @@ export function WithVersioning<T extends Constructor>(Base: T, config?: MixinCon
       description: 'Version number for optimistic locking',
       example: 1,
       default: 1,
+      type: () => Number,
       required: false,
     })(VersioningMixin.prototype, 'version');
   }
@@ -291,6 +298,7 @@ export function WithId<T extends Constructor>(Base: T, config?: MixinConfig) {
     ApiProperty({
       description: 'Unique identifier',
       example: 1,
+      type: () => Number,
       required: false,
     })(IdMixin.prototype, 'id');
   }
@@ -333,7 +341,7 @@ export function WithMessage<T extends Constructor>(
     ApiProperty({
       description: 'Response message providing additional context',
       example: config?.defaultMessage || 'Operation completed successfully',
-      type: String,
+      type: () => String,
       required: false,
       maxLength: config?.maxLength || 500,
     })(MessageMixin.prototype, fieldName);

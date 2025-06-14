@@ -2,6 +2,36 @@
 
 This guide helps you migrate between different versions of nestjs-prisma-base.
 
+## Upgrading to v1.1.1
+
+### Bug Fixes
+
+- **Swagger Circular Dependency**: Fixed circular dependency errors when using audit field mixins with Swagger integration
+- **Mixin Decorators**: Resolved `@ApiProperty` decorator issues in complex mixin combinations
+
+### Breaking Changes
+
+**None** - v1.1.1 is a pure bugfix release with no breaking changes.
+
+### Migration
+
+**No action required** - this is a drop-in replacement that fixes Swagger issues.
+
+#### Previously Failing Code Now Works
+
+```typescript
+// These combinations now work correctly with Swagger
+export class UserDto extends MixinCombinations.WithFullAuditTrail(BaseDto) {
+  name: string;
+  // No more circular dependency errors!
+}
+
+export class CompleteUserDto extends MixinCombinations.WithCompleteEntity(BaseDto) {
+  name: string;
+  // Swagger schema generation works properly
+}
+```
+
 ## Upgrading to v1.1.0
 
 ### New Features

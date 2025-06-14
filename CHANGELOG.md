@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - Swagger Circular Dependency Fix
+
+### Fixed
+
+- **Swagger Circular Dependency Error**: Resolved circular dependency issues when using audit field mixins with Swagger integration
+- **Mixin Swagger Decorators**: Fixed `@ApiProperty` decorators in all mixins to use lazy resolvers (`type: () => Type`)
+- **Complex Mixin Combinations**: Fixed Swagger schema generation for complex mixin combinations like `WithFullAuditTrail` and `WithCompleteEntity`
+- **Type Resolution**: Added explicit type specification to prevent Swagger reflection system from getting confused by mixin inheritance chains
+
+### Technical Details
+
+- Updated all mixin `@ApiProperty` decorators to use arrow function type resolvers
+- Fixed `WithTimestamps`, `WithSoftDelete`, `WithAuditFields`, `WithVersioning`, `WithId`, and `WithMessage` mixins
+- Updated `SwaggerBaseResponseDto` decorators to use lazy resolvers
+- Ensures compatibility with @nestjs/swagger v7.0.0+ and complex mixin compositions
+
+### Affected Components
+
+- All mixin combinations now work correctly with Swagger documentation
+- `MixinCombinations.WithFullAuditTrail` and related combinations
+- Custom mixin compositions using audit fields
+- No breaking changes - purely internal decorator improvements
+
 ## [1.1.0] - Response Message Fields
 
 ### Added

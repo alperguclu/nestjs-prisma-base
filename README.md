@@ -255,6 +255,7 @@ export class UserResponseDto extends SwaggerBaseResponseDto {
 
 ## Version History
 
+- **v1.1.1** - Fixed Swagger circular dependency issues with audit field mixins
 - **v1.1.0** - Response message fields for consistent API feedback
 - **v1.0.0** - Modular DTO composition with mixins
 - **v0.9.0** - Configurable DTOs and Swagger integration

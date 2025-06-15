@@ -32,6 +32,7 @@ export {
   getSwaggerDTOConfig,
   applySwaggerDecoratorsToClass,
   isSwaggerIntegrationEnabled,
+  EnableSwaggerBaseFields,
 } from './common/swagger-dtos';
 
 // v1.0.0: Modular DTO Composition (Mixins)

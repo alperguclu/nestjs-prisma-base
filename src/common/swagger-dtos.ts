@@ -1,4 +1,5 @@
 import { SwaggerDTOConfig } from './dto-config.interface';
+import { getDTOConfig, registerDTOConfigChangeCallback } from './configurable-dtos';
 
 /**
  * Check if @nestjs/swagger is available
@@ -36,14 +37,28 @@ let globalSwaggerConfig: SwaggerDTOConfig = {
       description: 'Timestamp when the record was last updated',
       example: '2023-01-01T12:00:00.000Z',
     },
+    message: {
+      description: 'Response message providing additional context about the operation',
+      example: 'Operation completed successfully',
+    },
   },
 };
+
+/**
+ * Track whether decorators have been applied to avoid duplicate application
+ */
+let decoratorsApplied = false;
 
 /**
  * Configure Swagger DTOs globally
  */
 export function configureSwaggerDTOs(config: Partial<SwaggerDTOConfig>): void {
   globalSwaggerConfig = { ...globalSwaggerConfig, ...config };
+
+  // Apply decorators now that configuration is available
+  if (config.enabled && !decoratorsApplied) {
+    applySwaggerDecorators();
+  }
 }
 
 /**
@@ -182,29 +197,36 @@ export class SwaggerBaseResponseDto {
 
 /**
  * Apply Swagger decorators to the SwaggerBaseResponseDto
- * This will be called automatically when the class is loaded
+ * This will be called when configuration is properly set
  */
 function applySwaggerDecorators() {
-  if (!isSwaggerAvailable) {
+  if (!isSwaggerAvailable || decoratorsApplied) {
     return;
   }
 
-  // Apply decorators to the prototype
-  const idConfig = getFieldConfig('id');
-  const createdAtConfig = getFieldConfig('createdAt');
-  const updatedAtConfig = getFieldConfig('updatedAt');
-  const messageConfig = getFieldConfig('message');
+  // Get both configurations
+  const swaggerConfig = globalSwaggerConfig;
+  const dtoConfig = getDTOConfig();
 
-  // Apply ApiProperty decorators if Swagger is enabled
-  if (globalSwaggerConfig.enabled) {
-    createConditionalApiProperty({
-      description: idConfig.description || 'Unique identifier',
-      example: idConfig.example || 1,
-      type: () => Number,
-      required: false,
-    })(SwaggerBaseResponseDto.prototype, 'id');
+  // Apply decorators to the prototype only if Swagger is enabled
+  if (swaggerConfig.enabled) {
+    const idConfig = getFieldConfig('id');
+    const createdAtConfig = getFieldConfig('createdAt');
+    const updatedAtConfig = getFieldConfig('updatedAt');
+    const messageConfig = getFieldConfig('message');
 
-    if (globalSwaggerConfig.includeTimestamps) {
+    // Apply ID field decorator if ID is enabled
+    if (dtoConfig.includeId !== false) {
+      createConditionalApiProperty({
+        description: idConfig.description || 'Unique identifier',
+        example: idConfig.example || 1,
+        type: () => Number,
+        required: false,
+      })(SwaggerBaseResponseDto.prototype, 'id');
+    }
+
+    // Apply timestamp decorators if timestamps are enabled
+    if (swaggerConfig.includeTimestamps && dtoConfig.includeTimestamps !== false) {
       createConditionalApiProperty({
         description: createdAtConfig.description || 'Creation timestamp',
         example: createdAtConfig.example || '2023-01-01T00:00:00.000Z',
@@ -220,13 +242,18 @@ function applySwaggerDecorators() {
       })(SwaggerBaseResponseDto.prototype, 'updatedAt');
     }
 
-    // Apply message field decorator
-    createConditionalApiProperty({
-      description: messageConfig.description || 'Response message providing additional context about the operation',
-      example: messageConfig.example || 'Operation completed successfully',
-      type: () => String,
-      required: false,
-    })(SwaggerBaseResponseDto.prototype, 'message');
+    // Apply message field decorator ONLY if message fields are enabled in DTO config
+    if (dtoConfig.includeMessage === true) {
+      createConditionalApiProperty({
+        description: messageConfig.description || 'Response message providing additional context about the operation',
+        example: messageConfig.example || dtoConfig.messageField?.defaultValue || 'Operation completed successfully',
+        type: () => String,
+        required: false,
+        maxLength: dtoConfig.messageField?.maxLength,
+      })(SwaggerBaseResponseDto.prototype, 'message');
+    }
+
+    decoratorsApplied = true;
   }
 }
 
@@ -257,8 +284,19 @@ export function isSwaggerIntegrationEnabled(): boolean {
   return isSwaggerAvailable && globalSwaggerConfig.enabled;
 }
 
-// Apply decorators when the module is loaded
-if (typeof window === 'undefined') {
-  // Only apply in Node.js environment (not in browser)
+/**
+ * Force decorator application (useful for testing or manual initialization)
+ */
+export function forceApplySwaggerDecorators(): void {
+  decoratorsApplied = false;
   applySwaggerDecorators();
 }
+
+// Register callback to re-apply decorators when DTO config changes
+registerDTOConfigChangeCallback(() => {
+  if (globalSwaggerConfig.enabled) {
+    forceApplySwaggerDecorators();
+  }
+});
+
+// No longer apply decorators immediately - wait for configuration

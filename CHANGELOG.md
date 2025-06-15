@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - SwaggerBaseResponseDto Message Field Fix
+
+### Fixed
+
+- **SwaggerBaseResponseDto Message Field**: Fixed missing `message` field in Swagger documentation despite proper configuration
+- **Configuration Timing Issue**: Resolved timing issue where Swagger decorators were applied before configuration was set
+- **Configuration Disconnection**: Fixed disconnection between `configureDTOs({ includeMessage: true })` and `configureSwaggerDTOs({ enabled: true })`
+- **Automatic Decorator Application**: Message field now appears automatically in Swagger docs when `includeMessage: true` is configured
+
+### Technical Details
+
+- **Deferred Decorator Application**: Decorators are now applied when configuration is set, not at module load time
+- **Configuration Integration**: Swagger decorators now respect the `includeMessage` setting from DTO configuration
+- **Cross-Configuration Communication**: Added callback system to sync DTO config changes with Swagger decorator updates
+- **Conditional Field Inclusion**: Message field decorator is only applied when `dtoConfig.includeMessage === true`
+
+### Affected Components
+
+- `SwaggerBaseResponseDto` now properly shows message field in Swagger documentation
+- All response DTOs extending `SwaggerBaseResponseDto` automatically include message field when configured
+- No breaking changes - purely fixes automatic behavior as documented
+
+### Configuration Requirements
+
+For automatic message field documentation, ensure both configurations are set:
+
+```typescript
+// Enable message fields in DTOs
+configureDTOs({ includeMessage: true });
+
+// Enable Swagger integration
+configureSwaggerDTOs({ enabled: true });
+```
+
 ## [1.1.1] - Swagger Circular Dependency Fix
 
 ### Fixed

@@ -1,5 +1,8 @@
 import { DTOConfig } from './dto-config.interface';
 
+// Forward declaration to avoid circular dependency
+let triggerSwaggerUpdate: (() => void) | null = null;
+
 /**
  * Global DTO configuration that can be set once and used across all DTOs
  */
@@ -42,7 +45,17 @@ export function configureDTOs(config: Partial<DTOConfig>): void {
     }
   }
 
+  const previousConfig = { ...globalDTOConfig };
   globalDTOConfig = { ...globalDTOConfig, ...config };
+
+  // Trigger Swagger decorator update if message configuration changed
+  if (
+    triggerSwaggerUpdate &&
+    (previousConfig.includeMessage !== globalDTOConfig.includeMessage ||
+      JSON.stringify(previousConfig.messageField) !== JSON.stringify(globalDTOConfig.messageField))
+  ) {
+    triggerSwaggerUpdate();
+  }
 }
 
 /**
@@ -50,6 +63,14 @@ export function configureDTOs(config: Partial<DTOConfig>): void {
  */
 export function getDTOConfig(): DTOConfig {
   return { ...globalDTOConfig };
+}
+
+/**
+ * Register a callback to be called when DTO configuration changes
+ * This is used by the Swagger integration to update decorators
+ */
+export function registerDTOConfigChangeCallback(callback: () => void): void {
+  triggerSwaggerUpdate = callback;
 }
 
 /**

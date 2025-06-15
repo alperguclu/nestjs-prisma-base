@@ -2,6 +2,62 @@
 
 This guide helps you migrate between different versions of nestjs-prisma-base.
 
+## Upgrading to v1.1.2
+
+### Bug Fixes
+
+- **SwaggerBaseResponseDto Message Field**: Fixed missing `message` field in Swagger documentation when using `SwaggerBaseResponseDto`
+- **Configuration Integration**: Fixed timing issue between `configureDTOs()` and `configureSwaggerDTOs()` functions
+
+### Breaking Changes
+
+**None** - v1.1.2 is a pure bugfix release with no breaking changes.
+
+### Migration
+
+**No action required** - this is a drop-in replacement that fixes Swagger documentation issues.
+
+#### Previously Missing Documentation Now Works
+
+If you were experiencing missing message fields in Swagger docs, they will now appear automatically:
+
+```typescript
+// This configuration combination now works properly
+configureDTOs({ includeMessage: true });
+configureSwaggerDTOs({ enabled: true });
+
+// Message field will now appear in Swagger documentation
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+  // message field now automatically documented! ✅
+}
+```
+
+#### Manual Workarounds No Longer Needed
+
+You can now remove manual `@ApiProperty` decorators for message fields:
+
+```typescript
+// Before v1.1.2 (manual workaround)
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+
+  @ApiProperty({
+    description: 'Success message',
+    type: 'string',
+    example: 'Login successful',
+    required: false,
+  })
+  message?: string; // ❌ Manual workaround no longer needed
+}
+
+// After v1.1.2 (automatic)
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+  // message field automatically documented ✅
+}
+```
+
 ## Upgrading to v1.1.1
 
 ### Bug Fixes

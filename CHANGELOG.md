@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - SwaggerBaseResponseDto Automatic Inheritance Fix
+
+### Fixed
+
+- **SwaggerBaseResponseDto Inheritance**: Fixed automatic Swagger decorator inheritance for child classes
+- **Message Field Documentation**: Resolved issue where message field and other base fields weren't appearing in child class Swagger documentation
+- **Decorator Propagation**: Fixed the fundamental issue where parent class decorators weren't being applied to child classes in Swagger schema generation
+
+### Added
+
+- **@EnableSwaggerBaseFields Decorator**: New class decorator that ensures automatic inheritance of Swagger decorators for base fields
+- **Simplified Configuration**: Cleaner approach to applying Swagger decorators to classes extending `SwaggerBaseResponseDto`
+- **Better Documentation**: Enhanced JSDoc with examples showing proper usage
+
+### Changed
+
+- **Usage Pattern**: Classes extending `SwaggerBaseResponseDto` now need to use the `@EnableSwaggerBaseFields` decorator for automatic field documentation
+- **Architecture**: Simplified the decorator application system for better reliability and performance
+
+### Usage
+
+```typescript
+// Before v1.1.3 (was supposed to work automatically but didn't)
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+  // Base fields missing from Swagger docs ❌
+}
+
+// After v1.1.3 (explicit decorator ensures it works)
+@EnableSwaggerBaseFields
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+  // Base fields automatically documented ✅
+}
+```
+
+### Technical Details
+
+- Removed complex inheritance tracking system that wasn't working reliably
+- Implemented simple decorator-based approach for explicit field inheritance
+- Maintains all existing configuration options (`includeMessage`, `includeTimestamps`, etc.)
+- No breaking changes to configuration - only adds the decorator requirement
+
 ## [1.1.2] - SwaggerBaseResponseDto Message Field Fix
 
 ### Fixed

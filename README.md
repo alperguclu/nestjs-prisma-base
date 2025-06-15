@@ -255,6 +255,7 @@ export class UserResponseDto extends SwaggerBaseResponseDto {
 
 ## Version History
 
+- **v1.1.3** - Fixed SwaggerBaseResponseDto inheritance with @EnableSwaggerBaseFields decorator
 - **v1.1.2** - Fixed SwaggerBaseResponseDto message field documentation issue
 - **v1.1.1** - Fixed Swagger circular dependency issues with audit field mixins
 - **v1.1.0** - Response message fields for consistent API feedback

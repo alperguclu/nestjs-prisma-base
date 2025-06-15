@@ -2,6 +2,70 @@
 
 This guide helps you migrate between different versions of nestjs-prisma-base.
 
+## Upgrading to v1.1.3
+
+### New Requirements
+
+- **@EnableSwaggerBaseFields Decorator**: Classes extending `SwaggerBaseResponseDto` now require the `@EnableSwaggerBaseFields` decorator for automatic field documentation
+
+### Breaking Changes
+
+**Minor Breaking Change**: Classes extending `SwaggerBaseResponseDto` now need to add the `@EnableSwaggerBaseFields` decorator.
+
+### Migration
+
+#### Required Changes
+
+Add the `@EnableSwaggerBaseFields` decorator to any class extending `SwaggerBaseResponseDto`:
+
+```typescript
+// Before v1.1.3
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+  @ApiProperty() token: string;
+}
+
+// After v1.1.3 (add decorator)
+import { SwaggerBaseResponseDto, EnableSwaggerBaseFields } from 'nestjs-prisma-base';
+
+@EnableSwaggerBaseFields
+export class LoginResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() user: AuthUser;
+  @ApiProperty() token: string;
+  // id, createdAt, updatedAt, message now automatically documented ✅
+}
+```
+
+#### Why This Change
+
+The previous automatic inheritance system wasn't working reliably because Swagger processes each class individually and doesn't automatically inherit decorators from parent classes. The new decorator ensures that base fields are properly documented.
+
+#### Benefits
+
+- **Guaranteed Documentation**: Base fields will always appear in Swagger docs when configured
+- **Better Performance**: No complex inheritance tracking overhead
+- **Explicit Intent**: Clear indication that automatic field documentation is desired
+- **Reliable Behavior**: Works consistently across different TypeScript/NestJS versions
+
+### Configuration Remains The Same
+
+Your existing configuration continues to work unchanged:
+
+```typescript
+// Configuration still works exactly the same
+configureDTOs({
+  includeMessage: true,
+  messageField: {
+    defaultValue: 'Operation completed successfully',
+    maxLength: 500,
+  },
+});
+
+configureSwaggerDTOs({
+  enabled: true,
+});
+```
+
 ## Upgrading to v1.1.2
 
 ### Bug Fixes

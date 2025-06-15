@@ -45,20 +45,20 @@ let globalSwaggerConfig: SwaggerDTOConfig = {
 };
 
 /**
- * Track whether decorators have been applied to avoid duplicate application
+ * Track classes that have been processed to avoid duplicate decorator application
  */
-let decoratorsApplied = false;
+const processedClasses = new WeakSet();
+
+/**
+ * Classes that extend SwaggerBaseResponseDto and need decorators applied
+ */
+const pendingClasses = new Set<any>();
 
 /**
  * Configure Swagger DTOs globally
  */
 export function configureSwaggerDTOs(config: Partial<SwaggerDTOConfig>): void {
   globalSwaggerConfig = { ...globalSwaggerConfig, ...config };
-
-  // Apply decorators now that configuration is available
-  if (config.enabled && !decoratorsApplied) {
-    applySwaggerDecorators();
-  }
 }
 
 /**
@@ -94,6 +94,62 @@ function getFieldConfig(fieldName: 'id' | 'createdAt' | 'updatedAt' | 'message')
     description: includeDescriptions ? config?.description : undefined,
     example: includeExamples ? config?.example : undefined,
   };
+}
+
+/**
+ * Apply Swagger decorators for base response fields to a specific class
+ */
+function applyBaseResponseDecorators(targetClass: any): void {
+  if (!isSwaggerAvailable || !globalSwaggerConfig.enabled) {
+    return;
+  }
+
+  // Get both configurations
+  const swaggerConfig = globalSwaggerConfig;
+  const dtoConfig = getDTOConfig();
+
+  const idConfig = getFieldConfig('id');
+  const createdAtConfig = getFieldConfig('createdAt');
+  const updatedAtConfig = getFieldConfig('updatedAt');
+  const messageConfig = getFieldConfig('message');
+
+  // Apply ID field decorator if ID is enabled
+  if (dtoConfig.includeId !== false) {
+    createConditionalApiProperty({
+      description: idConfig.description || 'Unique identifier',
+      example: idConfig.example || 1,
+      type: () => Number,
+      required: false,
+    })(targetClass.prototype, 'id');
+  }
+
+  // Apply timestamp decorators if timestamps are enabled
+  if (swaggerConfig.includeTimestamps && dtoConfig.includeTimestamps !== false) {
+    createConditionalApiProperty({
+      description: createdAtConfig.description || 'Creation timestamp',
+      example: createdAtConfig.example || '2023-01-01T00:00:00.000Z',
+      type: () => Date,
+      required: false,
+    })(targetClass.prototype, 'createdAt');
+
+    createConditionalApiProperty({
+      description: updatedAtConfig.description || 'Last update timestamp',
+      example: updatedAtConfig.example || '2023-01-01T12:00:00.000Z',
+      type: () => Date,
+      required: false,
+    })(targetClass.prototype, 'updatedAt');
+  }
+
+  // Apply message field decorator ONLY if message fields are enabled in DTO config
+  if (dtoConfig.includeMessage === true) {
+    createConditionalApiProperty({
+      description: messageConfig.description || 'Response message providing additional context about the operation',
+      example: messageConfig.example || dtoConfig.messageField?.defaultValue || 'Operation completed successfully',
+      type: () => String,
+      required: false,
+      maxLength: dtoConfig.messageField?.maxLength,
+    })(targetClass.prototype, 'message');
+  }
 }
 
 /**
@@ -153,6 +209,18 @@ export class SwaggerBaseUpdateDto {
 /**
  * Swagger-Enhanced Base Response DTO
  * Includes common fields with automatic Swagger documentation
+ *
+ * IMPORTANT: Classes extending this must use the @EnableSwaggerBaseFields decorator
+ * to automatically include base field documentation in Swagger
+ *
+ * @example
+ * ```typescript
+ * @EnableSwaggerBaseFields
+ * export class UserResponseDto extends SwaggerBaseResponseDto {
+ *   @ApiProperty() name: string;
+ *   // id, createdAt, updatedAt, message fields automatically documented
+ * }
+ * ```
  */
 export class SwaggerBaseResponseDto {
   /**
@@ -196,65 +264,35 @@ export class SwaggerBaseResponseDto {
 }
 
 /**
- * Apply Swagger decorators to the SwaggerBaseResponseDto
- * This will be called when configuration is properly set
+ * Class decorator that enables automatic Swagger base fields for classes extending SwaggerBaseResponseDto
+ *
+ * This decorator automatically applies ApiProperty decorators for the base fields (id, createdAt, updatedAt, message)
+ * based on your DTO configuration settings.
+ *
+ * @example
+ * ```typescript
+ * @EnableSwaggerBaseFields
+ * export class LoginResponseDto extends SwaggerBaseResponseDto {
+ *   @ApiProperty() user: AuthUser;
+ *   @ApiProperty() token: string;
+ *   // Base fields automatically documented based on configureDTOs() settings
+ * }
+ * ```
  */
-function applySwaggerDecorators() {
-  if (!isSwaggerAvailable || decoratorsApplied) {
-    return;
+export function EnableSwaggerBaseFields<T extends { new (...args: any[]): {} }>(constructor: T): T {
+  // Apply decorators immediately if configuration is available
+  if (globalSwaggerConfig.enabled) {
+    applyBaseResponseDecorators(constructor);
+  } else {
+    // Delay application until configuration is set
+    setTimeout(() => {
+      if (globalSwaggerConfig.enabled) {
+        applyBaseResponseDecorators(constructor);
+      }
+    }, 0);
   }
 
-  // Get both configurations
-  const swaggerConfig = globalSwaggerConfig;
-  const dtoConfig = getDTOConfig();
-
-  // Apply decorators to the prototype only if Swagger is enabled
-  if (swaggerConfig.enabled) {
-    const idConfig = getFieldConfig('id');
-    const createdAtConfig = getFieldConfig('createdAt');
-    const updatedAtConfig = getFieldConfig('updatedAt');
-    const messageConfig = getFieldConfig('message');
-
-    // Apply ID field decorator if ID is enabled
-    if (dtoConfig.includeId !== false) {
-      createConditionalApiProperty({
-        description: idConfig.description || 'Unique identifier',
-        example: idConfig.example || 1,
-        type: () => Number,
-        required: false,
-      })(SwaggerBaseResponseDto.prototype, 'id');
-    }
-
-    // Apply timestamp decorators if timestamps are enabled
-    if (swaggerConfig.includeTimestamps && dtoConfig.includeTimestamps !== false) {
-      createConditionalApiProperty({
-        description: createdAtConfig.description || 'Creation timestamp',
-        example: createdAtConfig.example || '2023-01-01T00:00:00.000Z',
-        type: () => Date,
-        required: false,
-      })(SwaggerBaseResponseDto.prototype, 'createdAt');
-
-      createConditionalApiProperty({
-        description: updatedAtConfig.description || 'Last update timestamp',
-        example: updatedAtConfig.example || '2023-01-01T12:00:00.000Z',
-        type: () => Date,
-        required: false,
-      })(SwaggerBaseResponseDto.prototype, 'updatedAt');
-    }
-
-    // Apply message field decorator ONLY if message fields are enabled in DTO config
-    if (dtoConfig.includeMessage === true) {
-      createConditionalApiProperty({
-        description: messageConfig.description || 'Response message providing additional context about the operation',
-        example: messageConfig.example || dtoConfig.messageField?.defaultValue || 'Operation completed successfully',
-        type: () => String,
-        required: false,
-        maxLength: dtoConfig.messageField?.maxLength,
-      })(SwaggerBaseResponseDto.prototype, 'message');
-    }
-
-    decoratorsApplied = true;
-  }
+  return constructor;
 }
 
 /**
@@ -284,19 +322,10 @@ export function isSwaggerIntegrationEnabled(): boolean {
   return isSwaggerAvailable && globalSwaggerConfig.enabled;
 }
 
-/**
- * Force decorator application (useful for testing or manual initialization)
- */
-export function forceApplySwaggerDecorators(): void {
-  decoratorsApplied = false;
-  applySwaggerDecorators();
-}
-
 // Register callback to re-apply decorators when DTO config changes
 registerDTOConfigChangeCallback(() => {
   if (globalSwaggerConfig.enabled) {
-    forceApplySwaggerDecorators();
+    // Re-apply decorators to all classes
+    applyBaseResponseDecorators(SwaggerBaseResponseDto);
   }
 });
-
-// No longer apply decorators immediately - wait for configuration

@@ -780,3 +780,101 @@ configureDTOs({
 ```
 
 ```
+
+## License
+
+MIT
+
+---
+
+## Troubleshooting Guide
+
+### 🚨 Configuration Not Working? Check Import Order!
+
+**The #1 cause of configuration issues is incorrect import order.**
+
+#### Problem
+
+- Configuration functions like `configureDTOs()` or `configureSwaggerDTOs()` seem to have no effect
+- Message fields not appearing despite proper configuration
+- Swagger documentation missing base fields
+
+#### Solution
+
+Import your configuration **FIRST** in `main.ts`:
+
+```typescript
+// ✅ CORRECT ORDER
+import './config/dto-config'; // ← Configuration MUST be first!
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  // ... rest of setup
+}
+```
+
+```typescript
+// ❌ WRONG ORDER
+import { NestFactory } from '@nestjs/core';
+import './config/dto-config'; // ← Too late! DTOs already initialized
+```
+
+### Common Issues and Solutions
+
+#### Issue: Message field not appearing in responses
+
+**Check:**
+
+1. Configuration import order (see above)
+2. `includeMessage: true` in `configureDTOs()`
+3. Using correct DTO base class (`ConfigurableBaseResponseDto` or `SwaggerBaseResponseDto`)
+
+#### Issue: Swagger documentation missing base fields
+
+**Check:**
+
+1. Configuration import order
+2. `@EnableSwaggerBaseFields` decorator on your DTO classes
+3. `configureSwaggerDTOs({ enabled: true })`
+
+#### Issue: Circular dependency errors with audit mixins
+
+**Solution:** Already fixed in v1.1.1+. Update to latest version.
+
+#### Issue: TypeScript compilation errors
+
+**Common causes:**
+
+- Missing imports
+- Incorrect generic types in base classes
+- Conflicting decorator types
+
+### Debug Configuration
+
+Add this to verify your configuration is loaded:
+
+```typescript
+// In your configuration file
+import { configureDTOs, configureSwaggerDTOs } from 'nestjs-prisma-base';
+
+console.log('🔧 Loading nestjs-prisma-base configuration...');
+
+configureDTOs({
+  includeMessage: true,
+  // ... other config
+});
+
+configureSwaggerDTOs({
+  enabled: true,
+});
+
+console.log('✅ Configuration loaded successfully');
+```
+
+You should see these console messages when your application starts.
+
+```
+
+```

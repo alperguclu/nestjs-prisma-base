@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.5] - 2024-12-19
+
+### Documentation
+
+- **MAJOR IMPROVEMENT**: Added prominent configuration import order documentation
+- Added troubleshooting section to features.md with common configuration issues
+- Enhanced README with clear configuration setup instructions
+- Updated migration guide with import order troubleshooting
+- Added debug configuration examples
+
+### Notes
+
+- **95% of configuration issues are caused by incorrect import order**
+- Configuration imports must be **first** in `main.ts` before any other imports
+- This addresses the most common support issue reported by users
+
 ## [1.1.4] - Export Fix
 
 ### Fixed

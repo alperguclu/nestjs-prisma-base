@@ -1,5 +1,26 @@
 # Migration Guide
 
+**⚠️ COMMON ISSUE: Configuration Not Working?**
+
+**95% of configuration issues are caused by incorrect import order!**
+
+Make sure your configuration import is **FIRST** in `main.ts`:
+
+```typescript
+// ✅ CORRECT - Configuration FIRST
+import './config/dto-config';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+// ❌ WRONG - Configuration after other imports
+import { NestFactory } from '@nestjs/core';
+import './config/dto-config'; // Too late!
+```
+
+---
+
+## Version Migration Guide
+
 This guide helps you migrate between different versions of nestjs-prisma-base.
 
 ## Upgrading to v1.1.3

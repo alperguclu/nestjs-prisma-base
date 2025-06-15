@@ -38,6 +38,51 @@ A comprehensive NestJS package providing base classes, utilities, and decorators
 npm install nestjs-prisma-base
 ```
 
+### Configuration (Required for Advanced Features)
+
+**⚠️ CRITICAL: Configuration must be imported BEFORE your application starts!**
+
+Create a configuration file and import it first in `main.ts`:
+
+**1. Create `src/config/dto-config.ts`:**
+
+```typescript
+import { configureDTOs, configureSwaggerDTOs } from 'nestjs-prisma-base';
+
+// Configure DTOs globally
+configureDTOs({
+  includeTimestamps: true,
+  includeId: true,
+  includeMessage: true, // Enable response message fields
+  messageField: {
+    fieldName: 'message',
+    defaultValue: 'Operation completed successfully',
+    maxLength: 500,
+  },
+});
+
+// Configure Swagger integration
+configureSwaggerDTOs({
+  enabled: true,
+});
+```
+
+**2. Import in `src/main.ts` FIRST:**
+
+```typescript
+// ⚠️ CRITICAL: This import MUST be first!
+import './config/dto-config';
+
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  await app.listen(3000);
+}
+bootstrap();
+```
+
 ### 1. Setup PrismaModule
 
 ```typescript
@@ -108,70 +153,6 @@ export class UserResponseDto extends BaseResponseDto {
 
 **That's it!** You now have a fully functional CRUD API with pagination, search, and filtering.
 
-## Core Concepts
-
-### 🔍 **Search & Filtering**
-
-```typescript
-// GET /users?search=john&status=active&page=1&limit=10
-// GET /users?search=john&searchFields=name,email&sortBy=name&sortOrder=asc
-```
-
-Configure search behavior:
-
-```typescript
-export class UserService extends BaseService<User, CreateUserDto, UpdateUserDto> {
-  protected searchConfig = {
-    defaultSearchFields: ['name', 'email'],
-    caseSensitive: false,
-    searchMode: 'contains', // 'contains' | 'startsWith' | 'endsWith'
-  };
-}
-```
-
-### 🔗 **Relation Loading**
-
-```typescript
-// GET /users?include=posts,profile
-// GET /users/1?include=posts
-```
-
-### 🎛 **Endpoint Control**
-
-```typescript
-@Controller('users')
-@EnableEndpoint(EndpointType.FIND_ALL)
-@EnableEndpoint(EndpointType.CREATE)
-@DisableEndpoint(EndpointType.REMOVE)
-export class UserController extends BaseController<...> {}
-```
-
-### 🧩 **DTO Mixins (v1.0.0)**
-
-Build DTOs with composable mixins:
-
-```typescript
-import { WithTimestamps, WithAuditFields, composeMixins } from 'nestjs-prisma-base';
-
-// Use individual mixins
-export class UserDto extends WithTimestamps(BaseDto) {
-  name: string;
-  // Includes: createdAt, updatedAt
-}
-
-// Combine multiple mixins
-export class AuditedUserDto extends composeMixins(BaseDto, WithTimestamps, WithAuditFields, WithVersioning) {
-  name: string;
-  // Includes: createdAt, updatedAt, createdBy, updatedBy, version
-}
-
-// Use convenience combinations
-export class CompleteUserDto extends MixinCombinations.WithCompleteEntity(BaseDto) {
-  name: string;
-  // Includes: id, createdAt, updatedAt, createdBy, updatedBy, version, deletedAt, isActive
-}
-```
-
 ## Pagination Response
 
 All `findAll` methods return rich pagination metadata:
@@ -192,6 +173,22 @@ All `findAll` methods return rich pagination metadata:
 
 ## Advanced Features
 
+### 📚 **Swagger Integration with Message Fields**
+
+For automatic message field documentation in Swagger:
+
+```typescript
+import { SwaggerBaseResponseDto, EnableSwaggerBaseFields } from 'nestjs-prisma-base';
+import { ApiProperty } from '@nestjs/swagger';
+
+@EnableSwaggerBaseFields // ← Required for automatic base field documentation
+export class UserResponseDto extends SwaggerBaseResponseDto {
+  @ApiProperty() name: string;
+  @ApiProperty() email: string;
+  // message, id, createdAt, updatedAt fields automatically documented
+}
+```
+
 ### 🏭 **Module Factory**
 
 Generate complete modules with one function:
@@ -211,30 +208,11 @@ export const UserModule = createModelModule({
 ```typescript
 import { ConfigurableBaseCreateDto, configureDTOs } from 'nestjs-prisma-base';
 
-// Global configuration
-configureDTOs({
-  includeTimestamps: true,
-  includeId: true,
-});
-
+// Global configuration (already done above)
 export class CreateUserDto extends ConfigurableBaseCreateDto {
   name: string;
   email: string;
   // Automatically includes configured fields
-}
-```
-
-### 📚 **Swagger Integration**
-
-```typescript
-import { SwaggerBaseResponseDto, configureSwaggerDTOs } from 'nestjs-prisma-base';
-
-configureSwaggerDTOs({ enabled: true });
-
-export class UserResponseDto extends SwaggerBaseResponseDto {
-  @ApiProperty() name: string;
-  @ApiProperty() email: string;
-  // Automatic Swagger decorators for base fields
 }
 ```
 
